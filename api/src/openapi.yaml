@@ -1,0 +1,366 @@
+openapi: 3.1.0
+info:
+  title: Deffavia API
+  version: "1.0.0"
+  description: API para reservas de asientos (orden + ítems), exportación/importación XML, reportes y correo.
+servers:
+  - url: http://localhost:3001
+tags:
+  - name: Health
+  - name: Users
+  - name: Auth
+  - name: Seats
+  - name: Reservations
+  - name: Files
+  - name: Reports
+  - name: Mail
+  - name: Admin
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        ok: { type: boolean, example: false }
+        error: { type: string }
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: alumno@gmail.com }
+        password: { type: string, minLength: 6, example: Secret123 }
+    RegisterResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        user:
+          type: object
+          properties:
+            id: { type: integer }
+            email: { type: string }
+            created_at: { type: string, format: date-time }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, example: alumno@gmail.com }
+        password: { type: string, example: Secret123 }
+    LoginResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        token: { type: string }
+        user:
+          type: object
+          properties:
+            id: { type: integer }
+            email: { type: string }
+    Seat:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        class: { type: string, enum: [business, economy] }
+        seat_status: { type: string, enum: [active, free] }
+    CreateSelection:
+      type: object
+      required: [seatCode, passengerName, cui, hasLuggage]
+      properties:
+        seatCode: { type: string, example: E5 }
+        passengerName: { type: string, example: Juan Pérez }
+        cui: { type: string, example: "1234567890123" }
+        hasLuggage: { type: boolean, example: true }
+    CreateOrderPayloadManual:
+      type: object
+      required: [userEmail, mode, selections]
+      properties:
+        userEmail: { type: string, format: email }
+        mode: { type: string, enum: [manual], example: manual }
+        selections:
+          type: array
+          items: { $ref: '#/components/schemas/CreateSelection' }
+    CreateOrderPayloadRandom:
+      type: object
+      required: [userEmail, mode, random]
+      properties:
+        userEmail: { type: string, format: email }
+        mode: { type: string, enum: [random], example: random }
+        random:
+          type: object
+          required: [seatClass, count, passengers]
+          properties:
+            seatClass: { type: string, enum: [business, economy] }
+            count: { type: integer, minimum: 1 }
+            passengers:
+              type: array
+              items:
+                type: object
+                required: [passengerName, cui, hasLuggage]
+                properties:
+                  passengerName: { type: string }
+                  cui: { type: string }
+                  hasLuggage: { type: boolean }
+    CreatedOrderResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        orderId: { type: integer }
+        isVip: { type: boolean }
+        subtotal: { type: number }
+        discountTotal: { type: number }
+        total: { type: number }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              seatCode: { type: string }
+              seatClass: { type: string, enum: [business, economy] }
+              passengerName: { type: string }
+              cui: { type: string }
+              total: { type: number }
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Healthcheck
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object, properties: { ok: { type: boolean, example: true } } }
+  /api/users:
+    post:
+      tags: [Users]
+      summary: Crear usuario (@gmail/@outlook)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: Creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegisterResponse' }
+        '4XX':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+        '401':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/seats:
+    get:
+      tags: [Seats]
+      summary: Asientos con estado de ocupación
+      parameters:
+        - in: query
+          name: class
+          schema: { type: string, enum: [business, economy] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Seat' }
+  /api/reservations:
+    post:
+      tags: [Reservations]
+      summary: Crear reserva (manual o aleatoria)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CreateOrderPayloadManual'
+                - $ref: '#/components/schemas/CreateOrderPayloadRandom'
+      responses:
+        '200':
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreatedOrderResponse' }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/reservations/my:
+    get:
+      tags: [Reservations]
+      summary: Mis reservas (usuario autenticado)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /api/reservations/{orderId}/items/{itemId}/seat:
+    patch:
+      tags: [Reservations]
+      summary: Modificar asiento (+10%)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newSeatCode, cui]
+              properties:
+                newSeatCode: { type: string }
+                cui: { type: string }
+      responses:
+        '200': { description: OK }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/reservations/{orderId}/items/{itemId}/cancel:
+    post:
+      tags: [Reservations]
+      summary: Cancelar asiento
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cui]
+              properties:
+                cui: { type: string }
+      responses:
+        '200': { description: OK }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/files/export-xml:
+    get:
+      tags: [Files]
+      summary: Exportar asientos activos (XML)
+      responses:
+        '200':
+          description: XML
+          content:
+            application/xml:
+              schema: { type: string }
+  /api/files/import-xml:
+    post:
+      tags: [Files]
+      summary: Importar XML y crear reservas (mode=imported)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /api/reports/summary:
+    get:
+      tags: [Reports]
+      summary: KPIs de la aplicación
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /api/mail/send-quote:
+    post:
+      tags: [Mail]
+      summary: Enviar correo HTML (pruebas)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toEmail, html]
+              properties:
+                toEmail: { type: string, format: email }
+                subject: { type: string }
+                html: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/admin/seed-seats:
+    post:
+      tags: [Admin]
+      summary: Poblar catálogo de 57 asientos (idempotente)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  insertedOrExisting: { type: integer }

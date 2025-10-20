@@ -1,0 +1,9 @@
+# Normalize line endings for text files
+* text=auto eol=lf
+
+# Treat common binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary

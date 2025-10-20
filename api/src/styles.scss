@@ -1,0 +1,36 @@
+:root {
+  --brand-primary: #7c3aed;
+  --brand-bg: #0f1115;
+  --brand-panel: #161a22;
+  --brand-border: #2a2f3a;
+  --text: #111827;
+  --text-invert: #e6e9ef;
+
+  /* Seat colors (ya usados en seat-map) */
+  --seat-free-bg: #f3f4f6;
+  --seat-free-br: #d1d5db;
+  --seat-selected-bg: #7c3aed;
+  --seat-selected-br: #5b21b6;
+  --seat-occupied-bg: #ef476f;
+  --seat-occupied-br: #c02652;
+  --accent-yellow: #ffd166;
+}
+
+/* Utilidades básicas */
+.badge {
+  display:inline-block; padding:.25rem .5rem; border-radius:999px; font-weight:700; font-size:.8rem;
+  background:#eef2ff; color:#3730a3;
+}
+.panel {
+  background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1rem;
+}
+.btn { cursor:pointer; border:0; border-radius:8px; padding:.5rem .75rem; font-weight:700; }
+.btn.ghost { background:#f3f4f6; }
+.btn.secondary { background:#fee2e2; }
+.input, select {
+  width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:.45rem .6rem;
+}
+.label { display:block; font-weight:700; margin-bottom:.25rem; }
+.field { min-width:220px; }
+.field-row { display:flex; gap:.75rem; flex-wrap:wrap; }
+.help { color:#6b7280; font-size:.9rem; }

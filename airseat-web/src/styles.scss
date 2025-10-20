@@ -1,0 +1,85 @@
+/* Tema claro con acentos amarillo–rosado–morado */
+:root {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-weak: #4b5563;
+  --muted: #6b7280;
+
+  --accent-yellow: #ffd166;  /* amarillo */
+  --accent-pink:   #ef476f;  /* rosado/coral */
+  --accent-purple: #7c3aed;  /* morado */
+
+  --focus-ring: rgba(124, 58, 237, .35);
+
+  --seat-free-bg: #f3f4f6;
+  --seat-free-br: #d1d5db;
+  --seat-selected-bg: var(--accent-purple);
+  --seat-selected-br: #5b21b6;
+  --seat-occupied-bg: var(--accent-pink);
+  --seat-occupied-br: #c02652;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; background: var(--bg); color: var(--text); }
+a { color: var(--accent-purple); }
+
+/* Panel card */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* Inputs estilo “aerolínea” */
+.field { display: grid; gap: .35rem; }
+.field-row { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.label { color: var(--text-weak); font-size: .92rem; font-weight: 600; }
+.input, select.input, textarea.input {
+  appearance: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: .7rem .8rem;
+  border-radius: 10px;
+  width: 100%;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02) inset;
+}
+.input:focus, select.input:focus, textarea.input:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+.input::placeholder { color: #9ca3af; }
+.input.invalid { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,.15); }
+
+.help { color: var(--muted); font-size: .85rem; }
+
+/* Botones */
+.btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  background: var(--accent-purple); color: white; padding:.6rem .95rem;
+  border:1px solid #5b21b6; border-radius:10px;
+  font-weight:700; cursor:pointer; text-decoration:none;
+  transition: filter .15s, transform .05s;
+}
+.btn:hover { filter: brightness(0.98); }
+.btn:active { transform: translateY(1px); }
+.btn.secondary {
+  background: var(--accent-yellow); color:#111827; border-color:#eab308;
+}
+.btn.ghost {
+  background: transparent; color: var(--accent-purple);
+  border: 1px solid var(--border);
+}
+
+/* Leyenda de asientos mini */
+.legend .seat { width: 22px; height: 18px; border-radius: 6px; display:inline-block; border:2px solid transparent; }
+.color-free     { background: var(--seat-free-bg); border-color: var(--seat-free-br); }
+.color-selected { background: var(--seat-selected-bg); border-color: var(--seat-selected-br); }
+.color-occupied { background: var(--seat-occupied-bg); border-color: var(--seat-occupied-br); }

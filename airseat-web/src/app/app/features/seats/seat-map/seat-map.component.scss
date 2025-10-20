@@ -1,0 +1,110 @@
+.zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2.4rem;
+  align-items: start;
+}
+
+.zone-title {
+  margin: 0 0 .5rem 0;
+  font-weight: 800;
+  color: var(--text, #111827);
+}
+
+/* Grilla por clase: 1 columna para etiquetas + N columnas de asientos */
+.grid {
+  --cols: 2;             /* se actualiza por inline style */
+  --seat: 66px;          /* ancho/alto del asiento */
+  --label: 28px;         /* ancho de columna para etiqueta de fila */
+  --row-gap: 12px;       /* gap entre filas */
+  --group-gap: 18px;     /* gap extra entre subgrupos (separador) */
+
+  display: grid;
+  grid-template-columns: var(--label) repeat(var(--cols), var(--seat));
+  grid-auto-rows: auto;
+  row-gap: var(--row-gap);
+  column-gap: 12px;
+}
+
+.corner { width: var(--label); height: 20px; }
+.col-label {
+  display:flex; align-items:center; justify-content:center;
+  height: 20px; color: #4b5563; font-weight: 700;
+}
+.row-label {
+  display:flex; align-items:center; justify-content:center;
+  width: var(--label); height: var(--seat);
+  color: #4b5563; font-weight: 700;
+}
+
+/* Separador de subgrupos: ocupa todas las columnas y crea un espacio extra */
+.row-separator {
+  grid-column: 1 / -1;
+  height: var(--group-gap);
+}
+
+/* Asiento “bonito” (igual que antes, con paleta morado-rosado-amarillo) */
+.seat {
+  position: relative;
+  width: var(--seat); height: var(--seat);
+  border-radius: 18px 18px 12px 12px;
+  border: 2px solid var(--seat-free-br, #d1d5db);
+  background: var(--seat-free-bg, #f3f4f6);
+  color: var(--text, #111827);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; cursor:pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,.08);
+  transition: background .15s, border-color .15s, color .15s, transform .06s ease-in, box-shadow .15s;
+  outline: none;
+}
+.seat:hover { box-shadow: 0 6px 14px rgba(0,0,0,.12); }
+.seat:active { transform: translateY(1px); }
+
+.seat-headrest {
+  position:absolute; top:6px; width: 40px; height: 16px;
+  background: #f9fafb; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(0,0,0,.06);
+}
+.seat-cushion {
+  position:absolute; top:24px; width: 48px; height: 22px;
+  background: #fff7ed; border-radius: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+}
+.seat-arms .arm {
+  position:absolute; top: 36px; width: 10px; height: 6px; background: #e5e7eb; border-radius: 3px;
+}
+.seat-arms .arm.left  { left: 8px; }
+.seat-arms .arm.right { right: 8px; }
+
+.seat-code { position:absolute; bottom: 6px; font-size: .8rem; letter-spacing:.4px; color:#374151; }
+
+/* Estados */
+.seat.pickable {
+  border-color: var(--accent-yellow, #ffd166);
+  box-shadow: 0 0 0 3px rgba(255, 209, 102, .25);
+}
+.seat.selected {
+  border-color: var(--seat-selected-br, #5b21b6);
+  background: var(--seat-selected-bg, #7c3aed);
+  color: #fff;
+}
+.seat.selected .seat-headrest,
+.seat.selected .seat-cushion,
+.seat.selected .seat-arms .arm,
+.seat.selected .seat-code { background: transparent; color: #fff; box-shadow:none; }
+
+.seat.occupied {
+  background: var(--seat-occupied-bg, #ef476f);
+  border-color: var(--seat-occupied-br, #c02652);
+  color: #fff; cursor:not-allowed;
+}
+.seat.occupied .seat-headrest,
+.seat.occupied .seat-cushion,
+.seat.occupied .seat-arms .arm,
+.seat.occupied .seat-code { background: transparent; color:#fff; box-shadow:none; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .zones { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .grid { --seat: 56px; --label: 24px; }
+}

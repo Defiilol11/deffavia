@@ -1,0 +1,50 @@
+# Root ignores for both api/ and airseat-web/
+
+# Node general
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json.* # partial lock temp files (keep the actual lockfiles)
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS / Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Coverage / Reports
+coverage/
+.nyc_output/
+
+# Build outputs
+dist/
+build/
+tmp/
+temp/
+.out/
+
+# Angular cache
+.angular/
+.angular/cache/
+
+# Logs
+logs/
+*.log
+
+# Misc
+*.local
+*.pid
+*.seed
+*.tgz
+
+# Swagger cache (if any generators are used)
+*.swagger.json
+*.openapi.json

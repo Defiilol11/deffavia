@@ -1,0 +1,77 @@
+<div class="zones">
+  <!-- Negocios: layout ordenado con separadores -->
+  <section class="zone">
+    <h3 class="zone-title">Clase de negocios</h3>
+    <div class="grid" [style.--cols]="businessCols.length">
+      <!-- Encabezado columnas -->
+      <div class="corner"></div>
+      <div class="col-label" *ngFor="let c of businessCols; trackBy: trackNum">{{ c }}</div>
+
+      <!-- Filas -->
+      <ng-container *ngFor="let r of businessRows; trackBy: trackStr">
+        <div class="row-label">{{ r }}</div>
+        <ng-container *ngFor="let c of businessCols; trackBy: trackNum">
+          <button
+            class="seat"
+            [class.occupied]="getSeat(r, c)?.occupied"
+            [class.selected]="getSeat(r, c) && isSelected(getSeat(r, c)!)"
+            [class.pickable]="getSeat(r, c) && canPick(getSeat(r, c)!)"
+            [disabled]="!getSeat(r, c) || getSeat(r, c)!.occupied || !isRightClass(getSeat(r, c)!)"
+            (click)="onClick(r, c)"
+            (dblclick)="onDblClick(r, c)"
+            [title]="r + c"
+          >
+            <span class="seat-headrest"></span>
+            <span class="seat-cushion"></span>
+            <span class="seat-arms">
+              <span class="arm left"></span>
+              <span class="arm right"></span>
+            </span>
+            <span class="seat-code">{{ r + c }}</span>
+          </button>
+        </ng-container>
+
+        <!-- Separador entre subgrupos -->
+        <div class="row-separator" *ngIf="sepAfterBusinessRow(r)"></div>
+      </ng-container>
+    </div>
+  </section>
+
+  <!-- Económica: layout ordenado con separadores -->
+  <section class="zone">
+    <h3 class="zone-title">Clase económica</h3>
+    <div class="grid" [style.--cols]="economyCols.length">
+      <!-- Encabezado columnas -->
+      <div class="corner"></div>
+      <div class="col-label" *ngFor="let c of economyCols; trackBy: trackNum">{{ c }}</div>
+
+      <!-- Filas -->
+      <ng-container *ngFor="let r of economyRows; trackBy: trackStr">
+        <div class="row-label">{{ r }}</div>
+        <ng-container *ngFor="let c of economyCols; trackBy: trackNum">
+          <button
+            class="seat"
+            [class.occupied]="getSeat(r, c)?.occupied"
+            [class.selected]="getSeat(r, c) && isSelected(getSeat(r, c)!)"
+            [class.pickable]="getSeat(r, c) && canPick(getSeat(r, c)!)"
+            [disabled]="!getSeat(r, c) || getSeat(r, c)!.occupied || !isRightClass(getSeat(r, c)!)"
+            (click)="onClick(r, c)"
+            (dblclick)="onDblClick(r, c)"
+            [title]="r + c"
+          >
+            <span class="seat-headrest"></span>
+            <span class="seat-cushion"></span>
+            <span class="seat-arms">
+              <span class="arm left"></span>
+              <span class="arm right"></span>
+            </span>
+            <span class="seat-code">{{ r + c }}</span>
+          </button>
+        </ng-container>
+
+        <!-- Separador entre subgrupos -->
+        <div class="row-separator" *ngIf="sepAfterEconomyRow(r)"></div>
+      </ng-container>
+    </div>
+  </section>
+</div>

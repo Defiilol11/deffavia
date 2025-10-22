@@ -10,6 +10,8 @@ const usersRouter = require('./routes/users');
 const authRouter = require('./routes/auth');
 const reservationsRouter = require('./routes/reservations');
 const reportsRouter = require('./reports');
+const recommendationsRouter = require('./routes/recommendations');
+const seatsRouter = require('./routes/seats');
 
 // Swagger
 const fs = require('fs');
@@ -87,6 +89,8 @@ app.use('/api/reservations', reservationsRouter);
 app.use('/api/files', filesRouter);
 app.use('/api/mail', mailRouter);
 app.use('/api/reports', reportsRouter);
+app.use('/api/recommendations', recommendationsRouter);
+app.use('/api/seats', seatsRouter);
 
 // Swagger UI (/api/docs)
 try {

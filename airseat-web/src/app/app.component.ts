@@ -10,11 +10,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { TopbarComponent } from './app/layout/topbar/topbar.component';
+import { ToastContainerComponent } from './app/shared/components/toast-container.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, TopbarComponent, CommonModule],
+  imports: [RouterOutlet, TopbarComponent, CommonModule, ToastContainerComponent],
   template: `
     <div
       class="app-wrapper min-h-screen flex flex-col bg-white dark:bg-[#0b1020] transition-colors duration-200"
@@ -37,6 +38,9 @@ import { TopbarComponent } from './app/layout/topbar/topbar.component';
           </div>
         </div>
       </main>
+
+      <!-- Toast Notifications -->
+      <app-toast-container></app-toast-container>
 
       <!-- Footer -->
       <footer

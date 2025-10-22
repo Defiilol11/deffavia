@@ -28,7 +28,28 @@ export interface CreateOrderPayloadRandom {
   };
 }
 
-export type CreateOrderPayload = CreateOrderPayloadManual | CreateOrderPayloadRandom;
+// Payload para grupos
+export interface CreateOrderPayloadGroup {
+  userEmail: string;
+  mode: 'group';
+  group: {
+    seatClass: SeatClass;
+    count: number;
+    requireContiguous: boolean;
+    groupName?: string;
+    passengers: Array<{
+      passengerName: string;
+      cui: string;
+      hasLuggage: boolean;
+      isLeader: boolean;
+    }>;
+  };
+}
+
+export type CreateOrderPayload =
+  | CreateOrderPayloadManual
+  | CreateOrderPayloadRandom
+  | CreateOrderPayloadGroup;
 
 export interface CreatedOrderResponse {
   ok: boolean;
@@ -37,6 +58,8 @@ export interface CreatedOrderResponse {
   subtotal: number;
   discountTotal: number;
   total: number;
+  groupDiscount?: number; // % descuento por grupo
+  contiguousSeats?: boolean; // si logró asientos contiguos
   items: Array<{
     id: number;
     seatCode: string;
@@ -44,6 +67,17 @@ export interface CreatedOrderResponse {
     passengerName: string;
     cui: string;
     total: number;
+    isGroupLeader?: boolean;
+  }>;
+}
+
+export interface ContiguousSeatsResponse {
+  ok: boolean;
+  available: boolean;
+  options: Array<{
+    row: string;
+    seats: string[];
+    totalPrice: number;
   }>;
 }
 
@@ -74,5 +108,14 @@ export class ReservationsApi {
 
   cancelOrder(orderId: number) {
     return this.http.post<{ ok: boolean }>(`/api/reservations/${orderId}/cancel`, {});
+  }
+
+  /**
+   * Obtiene opciones de asientos contiguos disponibles para grupos
+   */
+  getContiguousSeats(seatClass: SeatClass, count: number) {
+    return this.http.get<ContiguousSeatsResponse>('/api/seats/contiguous', {
+      params: { class: seatClass, count: count.toString() },
+    });
   }
 }

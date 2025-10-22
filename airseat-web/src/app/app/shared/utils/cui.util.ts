@@ -23,8 +23,8 @@ const muniByDept: Record<string, number> = {
   '21': 7,
   '22': 17,
 };
-export function validateCui(cui: string) {
-  const clean = (cui || '').replace(/\D/g, '');
+export function validateCui(cui: unknown) {
+  const clean = String(cui ?? '').replace(/\D/g, '');
   if (!/^\d{13}$/.test(clean)) return { valid: false, reason: 'El CUI debe tener 13 dígitos.' };
   const dept = clean.slice(9, 11);
   const muni = clean.slice(11, 13);

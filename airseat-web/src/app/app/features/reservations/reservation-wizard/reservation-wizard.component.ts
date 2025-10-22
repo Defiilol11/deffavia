@@ -1,10 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { SeatMapComponent, SeatClass } from '../../seats/seat-map/seat-map.component';
 import { validateCui } from '../../../shared/utils/cui.util';
 import { EmailService } from '../../../core/email.service';
 import { ApiService } from '../../../core/api.service';
+import { NotificationService } from '../../../core/notification.service';
 import { UserStore } from '../../auth/user-store.service';
 import {
   ReservationsApi,
@@ -64,6 +66,7 @@ type PersistedRow = {
             <select class="input" formControlName="mode">
               <option value="manual">Selección manual</option>
               <option value="random">Aleatoria (servidor)</option>
+              <option value="group">Reserva grupal (asientos contiguos)</option>
             </select>
           </div>
         </div>
@@ -105,6 +108,7 @@ type PersistedRow = {
             [seatClass]="cfgForm.value.seatClass || 'economy'"
             [extraOccupiedCodes]="localOccupied"
             [(selectedCodes)]="selectedCodes"
+            [showRecommendations]="true"
           ></app-seat-map>
         </div>
 
@@ -231,6 +235,8 @@ export class ReservationWizardComponent {
   private api = inject(ApiService);
   private users = inject(UserStore);
   private reservationsApi = inject(ReservationsApi);
+  private router = inject(Router);
+  private notifications = inject(NotificationService);
 
   userEmail = this.users.currentUser()?.email || '';
 
@@ -239,7 +245,7 @@ export class ReservationWizardComponent {
   cfgForm = this.fb.group({
     count: [1, [Validators.required, Validators.min(1)]],
     seatClass: ['economy' as SeatClass, Validators.required],
-    mode: ['manual' as 'manual' | 'random', Validators.required],
+    mode: ['manual' as 'manual' | 'random' | 'group', Validators.required],
   });
 
   availableCount = signal<number>(0);
@@ -308,6 +314,13 @@ export class ReservationWizardComponent {
   async continueCfg() {
     const { count, seatClass, mode } = this.cfgForm.getRawValue();
     if (!count || !seatClass || !mode) return;
+
+    // Si es modo grupo, redirigir al componente especializado
+    if (mode === 'group') {
+      this.router.navigate(['/reservations/group']);
+      return;
+    }
+
     const { freeByClass } = await this.checkAvailability();
     if (count > freeByClass.length) return;
 
@@ -469,6 +482,17 @@ export class ReservationWizardComponent {
           )
         );
         this.step.set(4);
+
+        // Si el backend indica que ahora es VIP, actualizar el store y mostrar aviso bonito
+        const wasVip = !!this.users.currentUser()?.isVip;
+        if (resp.isVip && !wasVip) {
+          const u = this.users.currentUser();
+          if (u) this.users.currentUser.set({ ...u, isVip: true });
+          this.notifications.success(
+            '¡Felicidades, ahora eres VIP! 👑',
+            'Tienes 10% de descuento en todas tus reservas desde ahora.'
+          );
+        }
       },
       error: (e) => {
         alert(`Error al crear la reserva: ${e?.error?.error || e.message}`);

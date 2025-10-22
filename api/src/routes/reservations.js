@@ -106,23 +106,131 @@ router.post('/', auth(true), async (req, res) => {
         const seatCode = picked[i].code;
         const price = basePrice(seatClass);
         const p = passengers[i];
-        prepared.push({ seatId, seatCode, seatClass, passengerName: p.passengerName, cui: p.cui, hasLuggage: !!p.hasLuggage, price });
+        prepared.push({ seatId, seatCode, seatClass, passengerName: p.passengerName, cui: p.cui, hasLuggage: !!p.hasLuggage, price, isGroupLeader: false });
+        subtotal += price;
+      }
+    } else if (mode === 'group') {
+      const grp = req.body.group || {};
+      const seatClass = grp.seatClass;
+      const count = Number(grp.count || 0);
+      const passengers = Array.isArray(grp.passengers) ? grp.passengers : [];
+      const requireContiguous = grp.requireContiguous !== false; // default true
+      const groupName = grp.groupName || null;
+
+      if (!seatClass || (seatClass !== 'business' && seatClass !== 'economy')) throw new Error('seatClass inválido');
+      if (count < 2) throw new Error('Los grupos deben tener al menos 2 personas');
+      if (passengers.length !== count) throw new Error('Debe proveer tantos pasajeros como asientos');
+
+      // Validar CUIs
+      for (const p of passengers) {
+        const v = validateCui(p.cui); if (!v.valid) throw new Error(`CUI inválido: ${p.cui}`);
+      }
+
+      let picked = [];
+
+      if (requireContiguous) {
+        // Buscar asientos contiguos (misma fila, columnas consecutivas)
+        // Estrategia: primero identificar filas con suficientes asientos, luego bloquearlos
+        const rowsQuery = await client.query(`
+          SELECT LEFT(s.code, 1) as row_letter,
+                 ARRAY_AGG(s.id ORDER BY s.code) as seat_ids,
+                 ARRAY_AGG(s.code ORDER BY s.code) as seat_codes
+          FROM seat s
+          WHERE s.class = $1
+            AND NOT EXISTS (
+              SELECT 1 FROM reservation_item ri
+              WHERE ri.seat_id = s.id AND ri.status = 'active'
+            )
+          GROUP BY LEFT(s.code, 1)
+          HAVING COUNT(*) >= $2
+          ORDER BY row_letter
+        `, [seatClass, count]);
+
+        if (!rowsQuery.rowCount) {
+          throw new Error(`No hay ${count} asientos contiguos disponibles en clase ${seatClass}`);
+        }
+
+        // Tomar la primera fila que tenga suficientes asientos y bloquearlos individualmente
+        const firstRow = rowsQuery.rows[0];
+        const seatIdsToLock = firstRow.seat_ids.slice(0, count);
+
+        // Bloquear los asientos seleccionados con FOR UPDATE
+        const lockedSeats = await client.query(`
+          SELECT id, code
+          FROM seat
+          WHERE id = ANY($1::int[])
+          ORDER BY code
+          FOR UPDATE SKIP LOCKED
+        `, [seatIdsToLock]);
+
+        // Verificar que pudimos bloquear todos los asientos necesarios
+        if (lockedSeats.rowCount < count) {
+          throw new Error(`No se pudieron bloquear ${count} asientos contiguos. Intenta de nuevo.`);
+        }
+
+        for (const seat of lockedSeats.rows) {
+          picked.push({
+            id: seat.id,
+            code: seat.code
+          });
+        }
+      } else {
+        // Sin requerimiento de contiguos, similar a random
+        for (let i = 0; i < count; i++) {
+          const seatRow = await client.query(
+            `SELECT s.id, s.code
+               FROM seat s
+              WHERE s.class=$1
+                AND NOT EXISTS (
+                  SELECT 1 FROM reservation_item ri
+                   WHERE ri.seat_id=s.id AND ri.status='active'
+                )
+              ORDER BY s.code ASC
+              LIMIT 1
+              FOR UPDATE SKIP LOCKED`,
+            [seatClass]
+          );
+          if (!seatRow.rowCount) throw new Error(`No hay suficientes asientos libres en ${seatClass}`);
+          picked.push(seatRow.rows[0]);
+        }
+      }
+
+      // Emparejar asientos con pasajeros, marcando el líder
+      for (let i = 0; i < count; i++) {
+        const seatId = picked[i].id;
+        const seatCode = picked[i].code;
+        const price = basePrice(seatClass);
+        const p = passengers[i];
+        const isLeader = p.isLeader === true || i === 0; // Primer pasajero es líder por defecto
+        prepared.push({
+          seatId, seatCode, seatClass,
+          passengerName: p.passengerName,
+          cui: p.cui,
+          hasLuggage: !!p.hasLuggage,
+          price,
+          isGroupLeader: isLeader,
+          groupName
+        });
         subtotal += price;
       }
     } else {
-      throw new Error('Modo inválido (manual|random)');
+      throw new Error('Modo inválido (manual|random|group)');
     }
 
     const discountTotal = isVip ? +(subtotal * 0.10).toFixed(2) : 0;
     const modifiersTotal = 0;
     const orderTotal = +(subtotal - discountTotal + modifiersTotal).toFixed(2);
 
+    // Mapear modo 'group' a 'manual' para compatibilidad con constraint de BD
+    // (hasta que se actualice el constraint para incluir 'group')
+    const dbMode = mode === 'group' ? 'manual' : (mode || 'manual');
+
     // Crear encabezado
     const insOrder = await client.query(
       `INSERT INTO reservation_order(user_id, user_email, mode, status, price_subtotal, discount_total, modifiers_total, total, reserved_at)
        VALUES (NULL,$1,$2,'active',$3,$4,$5,$6,NOW())
        RETURNING id`,
-      [userEmail, mode || 'manual', subtotal, discountTotal, modifiersTotal, orderTotal]
+      [userEmail, dbMode, subtotal, discountTotal, modifiersTotal, orderTotal]
     );
     const orderId = insOrder.rows[0].id;
 
@@ -226,14 +334,44 @@ router.patch('/:orderId/items/:itemId/seat', auth(true), async (req, res) => {
         WHERE o.id=$1`, [orderId]
     );
 
+    // Obtener el nuevo total de la orden y el item actualizado
+    const updatedOrder = await client.query(
+      `SELECT total, price_subtotal, discount_total, modifiers_total FROM reservation_order WHERE id=$1`,
+      [orderId]
+    );
+    const updatedItem = await client.query(
+      `SELECT total FROM reservation_item WHERE id=$1`,
+      [itemId]
+    );
+
+    const newOrderTotal = updatedOrder.rows[0].total;
+    const newItemTotal = updatedItem.rows[0].total;
+    const oldItemTotal = it.total;
+
     await client.query('COMMIT');
 
     try {
-      const html = buildItemModifiedHtml({ orderId: Number(orderId), from: it.old_code, to: newSeatCode, increment });
+      const html = buildItemModifiedHtml({
+        orderId: Number(orderId),
+        from: it.old_code,
+        to: newSeatCode,
+        increment,
+        oldItemTotal,
+        newItemTotal,
+        orderTotal: newOrderTotal
+      });
       await sendMailGeneric(req.user.email, 'Modificación de asiento', html);
     } catch (e) { console.error('Email item modified error:', e.message); }
 
-    res.json({ ok: true, increment, from: it.old_code, to: newSeatCode });
+    res.json({
+      ok: true,
+      increment,
+      from: it.old_code,
+      to: newSeatCode,
+      oldItemTotal,
+      newItemTotal,
+      orderTotal: newOrderTotal
+    });
   } catch (e) {
     await client.query('ROLLBACK');
     res.status(400).json({ ok: false, error: e.message });

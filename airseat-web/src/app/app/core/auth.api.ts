@@ -18,6 +18,21 @@ export interface RegisterResponse {
   user: ApiUser;
 }
 
+export interface UpdateUserPayload {
+  email?: string;
+  password?: string;
+  currentPassword?: string;
+}
+
+export interface UpdateUserResponse {
+  ok: boolean;
+  user: ApiUser;
+  updated: {
+    email: boolean;
+    password: boolean;
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthApi {
   private http = inject(HttpClient);
@@ -28,5 +43,9 @@ export class AuthApi {
 
   login(email: string, password: string) {
     return this.http.post<LoginResponse>('/api/auth/login', { email, password });
+  }
+
+  updateUser(userId: number | string, payload: UpdateUserPayload) {
+    return this.http.patch<UpdateUserResponse>(`/api/users/${userId}`, payload);
   }
 }

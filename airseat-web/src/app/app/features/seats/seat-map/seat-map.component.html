@@ -15,9 +15,15 @@
             <button
               class="seat"
               [class.occupied]="getSeat(r, c)?.occupied"
+              [class.mode-manual]="getSeat(r, c)?.mode === 'manual'"
+              [class.mode-random]="getSeat(r, c)?.mode === 'random'"
+              [class.mode-imported]="getSeat(r, c)?.mode === 'imported'"
+              [class.previous-seat]="getSeat(r, c) && isPreviousSeat(getSeat(r, c)!)"
               [class.selected]="getSeat(r, c) && isSelected(getSeat(r, c)!)"
               [class.pickable]="getSeat(r, c) && canPick(getSeat(r, c)!)"
               [class.restricted]="getSeat(r, c) && !isRightClass(getSeat(r, c)!)"
+              [class.recommended]="getSeat(r, c) && isRecommended(getSeat(r, c)!)"
+              [attr.data-reason]="getSeat(r, c) ? getRecommendationReason(getSeat(r, c)!) : null"
               [disabled]="
                 !getSeat(r, c) || getSeat(r, c)!.occupied || !isRightClass(getSeat(r, c)!)
               "
@@ -77,9 +83,15 @@
           <button
             class="seat"
             [class.occupied]="getSeat(r, c)?.occupied"
+            [class.mode-manual]="getSeat(r, c)?.mode === 'manual'"
+            [class.mode-random]="getSeat(r, c)?.mode === 'random'"
+            [class.mode-imported]="getSeat(r, c)?.mode === 'imported'"
+            [class.previous-seat]="getSeat(r, c) && isPreviousSeat(getSeat(r, c)!)"
             [class.selected]="getSeat(r, c) && isSelected(getSeat(r, c)!)"
             [class.pickable]="getSeat(r, c) && canPick(getSeat(r, c)!)"
             [class.restricted]="getSeat(r, c) && !isRightClass(getSeat(r, c)!)"
+            [class.recommended]="getSeat(r, c) && isRecommended(getSeat(r, c)!)"
+            [attr.data-reason]="getSeat(r, c) ? getRecommendationReason(getSeat(r, c)!) : null"
             [disabled]="!getSeat(r, c) || getSeat(r, c)!.occupied || !isRightClass(getSeat(r, c)!)"
             (click)="onClick(r, c)"
             (dblclick)="onDblClick(r, c)"
@@ -146,6 +158,10 @@
     <span class="inline-flex items-center gap-1">
       <span class="h-2.5 w-2.5 rounded-full bg-rose-600 ring-1 ring-inset ring-rose-600/30"></span>
       Ocupado
+    </span>
+    <span *ngIf="previousSeatCode" class="inline-flex items-center gap-1">
+      <span class="h-2.5 w-2.5 rounded-full bg-pink-500 ring-1 ring-inset ring-pink-500/30"></span>
+      Tu asiento anterior
     </span>
     <span class="inline-flex items-center gap-1">
       <span class="h-2.5 w-2.5 rounded-full bg-zinc-500 ring-1 ring-inset ring-zinc-500/30"></span>

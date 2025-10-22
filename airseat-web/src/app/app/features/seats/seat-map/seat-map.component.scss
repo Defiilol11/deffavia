@@ -124,6 +124,84 @@
   border-color: var(--seat-occupied-br, #c02652);
   color: #fff; cursor:not-allowed;
 }
+
+/* Modos de reserva (colores según estadísticas) */
+.seat.mode-manual {
+  background: #3b82f6; /* blue-500 */
+  border-color: #2563eb; /* blue-600 */
+  color: #fff;
+}
+.seat.mode-random {
+  background: #22c55e; /* green-500 */
+  border-color: #16a34a; /* green-600 */
+  color: #fff;
+}
+.seat.mode-imported {
+  background: #f97316; /* orange-500 */
+  border-color: #ea580c; /* orange-600 */
+  color: #fff;
+}
+.seat.mode-manual .seat-headrest,
+.seat.mode-manual .seat-cushion,
+.seat.mode-manual .seat-arms .arm,
+.seat.mode-manual .seat-code,
+.seat.mode-random .seat-headrest,
+.seat.mode-random .seat-cushion,
+.seat.mode-random .seat-arms .arm,
+.seat.mode-random .seat-code,
+.seat.mode-imported .seat-headrest,
+.seat.mode-imported .seat-cushion,
+.seat.mode-imported .seat-arms .arm,
+.seat.mode-imported .seat-code { background: transparent; color: #fff; box-shadow:none; }
+
+/* Asiento anterior (resaltado especial con animación y badge) */
+.seat.previous-seat {
+  background: #ec4899; /* pink-500 - más vibrante que rose */
+  border-color: #db2777; /* pink-600 */
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.3), 0 6px 14px rgba(0,0,0,.15);
+  animation: pulse-previous 2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes pulse-previous {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.3), 0 6px 14px rgba(0,0,0,.15);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(236, 72, 153, 0.2), 0 8px 18px rgba(0,0,0,.2);
+  }
+}
+
+.seat.previous-seat::before {
+  content: '←';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #fbbf24; /* amber-400 */
+  border: 2px solid #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #78350f; /* amber-900 */
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  z-index: 10;
+}
+
+.seat.previous-seat .seat-headrest,
+.seat.previous-seat .seat-cushion,
+.seat.previous-seat .seat-arms .arm,
+.seat.previous-seat .seat-code {
+  background: transparent;
+  color: #fff;
+  box-shadow: none;
+}
+
 /* Restringido por clase (mostrar atenuado y borde punteado) */
 .seat.restricted {
   filter: grayscale(0.6);
@@ -140,6 +218,49 @@
 .seat.occupied .seat-cushion,
 .seat.occupied .seat-arms .arm,
 .seat.occupied .seat-code { background: transparent; color:#fff; box-shadow:none; }
+
+/* Asiento recomendado - estrella dorada */
+.seat.recommended:not(.occupied):not(.selected) {
+  position: relative;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  animation: pulse-recommendation 2s ease-in-out infinite;
+}
+
+.seat.recommended:not(.occupied):not(.selected)::after {
+  content: '⭐';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.seat.recommended:not(.occupied):not(.selected):hover::before {
+  content: attr(data-reason);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  font-size: 11px;
+  border-radius: 6px;
+  white-space: nowrap;
+  margin-bottom: 8px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+@keyframes pulse-recommendation {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.5), 0 0 12px rgba(245, 158, 11, 0.3);
+  }
+}
 
 /* Responsive */
 @media (max-width: 1024px) {

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Deffavia API
-  version: "1.0.0"
+  version: "1.1.0"
   description: API para reservas de asientos (orden + ítems), exportación/importación XML, reportes y correo.
 servers:
   - url: http://localhost:3001
@@ -15,6 +15,7 @@ tags:
   - name: Reports
   - name: Mail
   - name: Admin
+  - name: Recommendations
 components:
   securitySchemes:
     bearerAuth:
@@ -59,13 +60,14 @@ components:
           properties:
             id: { type: integer }
             email: { type: string }
+            isVip: { type: boolean, description: "Indicador VIP según reservas activas" }
     Seat:
       type: object
       properties:
         id: { type: integer }
         code: { type: string }
         class: { type: string, enum: [business, economy] }
-        seat_status: { type: string, enum: [active, free] }
+        seat_status: { type: string, description: "Estado en vista v_seat_occupancy (p.ej. 'occupied' | 'free')" }
     CreateSelection:
       type: object
       required: [seatCode, passengerName, cui, hasLuggage]
@@ -104,6 +106,31 @@ components:
                   passengerName: { type: string }
                   cui: { type: string }
                   hasLuggage: { type: boolean }
+    CreateOrderPayloadGroup:
+      type: object
+      required: [userEmail, mode, group]
+      properties:
+        userEmail: { type: string, format: email }
+        mode: { type: string, enum: [group], example: group }
+        group:
+          type: object
+          required: [seatClass, count, passengers]
+          properties:
+            seatClass: { type: string, enum: [business, economy] }
+            count: { type: integer, minimum: 2 }
+            requireContiguous: { type: boolean, default: true }
+            groupName: { type: string, nullable: true }
+            passengers:
+              type: array
+              minItems: 2
+              items:
+                type: object
+                required: [passengerName, cui, hasLuggage]
+                properties:
+                  passengerName: { type: string }
+                  cui: { type: string }
+                  hasLuggage: { type: boolean }
+                  isLeader: { type: boolean, description: "Marca líder del grupo (opcional, por defecto el primero)" }
     CreatedOrderResponse:
       type: object
       properties:
@@ -124,6 +151,88 @@ components:
               passengerName: { type: string }
               cui: { type: string }
               total: { type: number }
+    ModifiedItemSeatResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        increment: { type: number, description: "+10% aplicado" }
+        from: { type: string, description: "Código de asiento anterior" }
+        to: { type: string, description: "Nuevo código de asiento" }
+        oldItemTotal: { type: number }
+        newItemTotal: { type: number }
+        orderTotal: { type: number }
+    RecommendationsResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        recommendations:
+          type: object
+          properties:
+            favoriteClass: { type: string, enum: [business, economy], nullable: true }
+            favoriteSeats:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  class: { type: string, enum: [business, economy] }
+                  timesReserved: { type: integer }
+            suggestedSeats:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  class: { type: string, enum: [business, economy] }
+                  available: { type: boolean }
+            popularSeats:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  class: { type: string, enum: [business, economy] }
+                  totalReservations: { type: integer }
+            reasoning: { type: string }
+    ContiguousSeatsResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        available: { type: boolean }
+        count: { type: integer }
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              row: { type: string }
+              seats:
+                type: array
+                items: { type: string }
+              totalSeatsAvailable: { type: integer }
+              pricePerSeat: { type: number }
+              totalPrice: { type: number }
+    UpdateUserPatchRequest:
+      type: object
+      properties:
+        email: { type: string, format: email, description: "Debe ser @gmail.com u @outlook.com" }
+        password: { type: string, minLength: 6 }
+        currentPassword: { type: string, description: "Requerida si se cambia password" }
+    UpdateUserPatchResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        user:
+          type: object
+          properties:
+            id: { type: integer }
+            email: { type: string }
+            created_at: { type: string, format: date-time }
+        updated:
+          type: object
+          properties:
+            email: { type: boolean }
+            password: { type: boolean }
 paths:
   /api/health:
     get:
@@ -150,6 +259,32 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/RegisterResponse' }
+        '4XX':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/users/{id}:
+    patch:
+      tags: [Users]
+      summary: Actualizar perfil de usuario (parcial)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserPatchRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UpdateUserPatchResponse' }
         '4XX':
           description: Error
           content:
@@ -194,7 +329,7 @@ paths:
   /api/reservations:
     post:
       tags: [Reservations]
-      summary: Crear reserva (manual o aleatoria)
+      summary: Crear reserva (manual, aleatoria o grupal)
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -204,6 +339,7 @@ paths:
               oneOf:
                 - $ref: '#/components/schemas/CreateOrderPayloadManual'
                 - $ref: '#/components/schemas/CreateOrderPayloadRandom'
+                - $ref: '#/components/schemas/CreateOrderPayloadGroup'
       responses:
         '200':
           description: Creada
@@ -253,7 +389,57 @@ paths:
                 newSeatCode: { type: string }
                 cui: { type: string }
       responses:
-        '200': { description: OK }
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModifiedItemSeatResponse' }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/seats/contiguous:
+    get:
+      tags: [Seats]
+      summary: Opciones de asientos contiguos disponibles
+      parameters:
+        - in: query
+          name: class
+          required: true
+          schema: { type: string, enum: [business, economy] }
+        - in: query
+          name: count
+          required: true
+          schema: { type: integer, minimum: 2 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContiguousSeatsResponse' }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/recommendations/seats:
+    get:
+      tags: [Recommendations]
+      summary: Recomendaciones de asientos basadas en historial
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: userEmail
+          required: false
+          description: Si no se envía, se usa el email del token
+          schema: { type: string, format: email }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RecommendationsResponse' }
         '400':
           description: Error
           content:
@@ -282,6 +468,23 @@ paths:
               required: [cui]
               properties:
                 cui: { type: string }
+      responses:
+        '200': { description: OK }
+        '400':
+          description: Error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/reservations/{orderId}/cancel:
+    post:
+      tags: [Reservations]
+      summary: Cancelar una orden completa (marca ítems activos como cancelados)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: integer }
       responses:
         '200': { description: OK }
         '400':
@@ -350,6 +553,20 @@ paths:
                 html: { type: string }
       responses:
         '200': { description: OK }
+  /api/mail/ping:
+    get:
+      tags: [Mail]
+      summary: Ping del servicio de correo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, example: true }
+                  service: { type: string, example: mail }
   /api/admin/seed-seats:
     post:
       tags: [Admin]

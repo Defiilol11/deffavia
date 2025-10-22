@@ -193,7 +193,7 @@ function buildOrderCreatedHtml(order, items) {
 }
 
 // 3) Modificación de asiento (+10%)
-function buildItemModifiedHtml({ orderId, from, to, increment }) {
+function buildItemModifiedHtml({ orderId, from, to, increment, oldItemTotal, newItemTotal, orderTotal }) {
   const body = `
     <div style="text-align:center;margin-bottom:32px">
       <div style="display:inline-block;background:rgba(251,146,60,0.15);padding:20px;border-radius:50%;margin-bottom:16px">
@@ -225,6 +225,28 @@ function buildItemModifiedHtml({ orderId, from, to, increment }) {
       <p style="margin:0;color:#fdba74;font-size:14px">
         ⚠️ <strong>Recargo aplicado:</strong> +Q ${money(increment)} por cambio de asiento
       </p>
+    </div>
+
+    <h2 style="font-size:18px;font-weight:600;margin:32px 0 16px 0;color:#c4b5fd">Detalle del Costo</h2>
+    <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:24px;margin:24px 0">
+      <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:8px 0;color:#94a3b8;font-size:15px">Total anterior del asiento</td>
+          <td style="padding:8px 0;text-align:right;font-size:15px;color:#94a3b8;text-decoration:line-through">Q ${money(oldItemTotal)}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:#94a3b8;font-size:15px">Recargo por cambio (+10%)</td>
+          <td style="padding:8px 0;text-align:right;font-size:15px;color:#fb923c">+Q ${money(increment)}</td>
+        </tr>
+        <tr style="border-top:2px solid ${BRAND_BORDER}">
+          <td style="padding:16px 0 8px 0;color:#c4b5fd;font-size:16px;font-weight:600">Nuevo total del asiento</td>
+          <td style="padding:16px 0 8px 0;text-align:right;font-size:18px;font-weight:700;color:#10b981">Q ${money(newItemTotal)}</td>
+        </tr>
+        <tr style="border-top:2px solid ${BRAND_BORDER}">
+          <td style="padding:16px 0 0 0;color:#c4b5fd;font-size:18px;font-weight:700">Total de la orden</td>
+          <td style="padding:16px 0 0 0;text-align:right;font-size:24px;font-weight:700;color:#10b981">Q ${money(orderTotal)}</td>
+        </tr>
+      </table>
     </div>`;
   return layout('Modificación de Asiento', body);
 }

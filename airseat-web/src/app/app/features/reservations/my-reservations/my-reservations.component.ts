@@ -120,6 +120,7 @@ import { SeatPickerModalComponent } from '../components/seat-picker-modal.compon
       *ngIf="showPicker"
       [title]="'Elegir asiento (clase ' + (pickerFor?.seat_class || '') + ')'"
       [seatClass]="pickerFor?.seat_class || 'economy'"
+      [currentSeatInfo]="pickerFor"
       (cancel)="closePicker()"
       (pick)="confirmPicker($event)"
     />

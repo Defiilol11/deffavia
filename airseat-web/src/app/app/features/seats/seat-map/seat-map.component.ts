@@ -7,11 +7,18 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../core/api.service';
+import {
+  RecommendationsService,
+  RecommendationsResponse,
+} from '../../../core/recommendations.service';
+import { UserStore } from '../../auth/user-store.service';
 
 export type SeatClass = 'business' | 'economy';
+export type SeatMode = 'manual' | 'random' | 'imported';
 type SeatStatus = 'active' | 'free';
 
 interface SeatDto {
@@ -24,6 +31,7 @@ interface SeatCell {
   code: string;
   class: SeatClass;
   occupied: boolean;
+  mode?: SeatMode;
 }
 
 @Component({
@@ -34,7 +42,9 @@ interface SeatCell {
   styleUrls: ['./seat-map.component.scss'],
 })
 export class SeatMapComponent implements OnInit, OnChanges {
-  constructor(private api: ApiService) {}
+  private api = inject(ApiService);
+  private recommendationsService = inject(RecommendationsService);
+  private userStore = inject(UserStore);
 
   // Selección
   @Input() pickMode = false;
@@ -43,6 +53,16 @@ export class SeatMapComponent implements OnInit, OnChanges {
 
   // Ocupados extra (reservas locales mientras se confirma)
   @Input() extraOccupiedCodes: string[] = [];
+
+  // Modo de cada asiento (para reportes)
+  @Input() seatModes: { code: string; mode: SeatMode }[] = [];
+
+  // Asiento anterior (para marcar visualmente en el picker)
+  @Input() previousSeatCode?: string;
+
+  // Recomendaciones inteligentes
+  @Input() showRecommendations = false;
+  recommendations = signal<RecommendationsResponse | null>(null);
 
   // Two-way selection
   @Input() selectedCodes: string[] = [];
@@ -65,9 +85,16 @@ export class SeatMapComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.loadFromApi();
+    if (this.showRecommendations) {
+      this.loadRecommendations();
+    }
   }
   ngOnChanges(ch: SimpleChanges): void {
     if (ch['extraOccupiedCodes']) this.markOccupied();
+    if (ch['seatModes']) this.applySeatModes();
+    if (ch['showRecommendations'] && ch['showRecommendations'].currentValue) {
+      this.loadRecommendations();
+    }
   }
 
   private loadFromApi() {
@@ -78,6 +105,7 @@ export class SeatMapComponent implements OnInit, OnChanges {
       }
       this.seats.set(m);
       this.markOccupied();
+      this.applySeatModes();
     });
   }
 
@@ -91,6 +119,16 @@ export class SeatMapComponent implements OnInit, OnChanges {
     this.seats.set(m);
   }
 
+  private applySeatModes() {
+    if (!this.seatModes?.length) return;
+    const m = new Map(this.seats());
+    for (const { code, mode } of this.seatModes) {
+      const cell = m.get(code);
+      if (cell) m.set(code, { ...cell, mode });
+    }
+    this.seats.set(m);
+  }
+
   getSeat(row: string, col: number): SeatCell | undefined {
     return this.seats().get(`${row}${col}`);
   }
@@ -100,6 +138,9 @@ export class SeatMapComponent implements OnInit, OnChanges {
   }
   isSelected(s: SeatCell) {
     return this.selectedCodes.includes(s.code);
+  }
+  isPreviousSeat(s: SeatCell) {
+    return this.previousSeatCode === s.code;
   }
   canPick(s: SeatCell) {
     return (
@@ -142,6 +183,29 @@ export class SeatMapComponent implements OnInit, OnChanges {
       ev.preventDefault();
       this.onClick(row, col);
     }
+  }
+
+  private loadRecommendations() {
+    const user = this.userStore.currentUser();
+    if (!user?.email) return;
+
+    this.recommendationsService.getSeatRecommendations(user.email).subscribe({
+      next: (resp) => {
+        this.recommendations.set(resp);
+      },
+      error: (err) => {
+        console.error('Error loading recommendations:', err);
+        this.recommendations.set(null);
+      },
+    });
+  }
+
+  isRecommended(s: SeatCell): boolean {
+    return this.recommendationsService.isRecommended(s.code, this.recommendations());
+  }
+
+  getRecommendationReason(s: SeatCell): string | null {
+    return this.recommendationsService.getRecommendationReason(s.code, this.recommendations());
   }
 
   // Separador después de ciertas filas (para espaciado de bloques)

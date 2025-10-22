@@ -21,9 +21,48 @@
   --seat-occupied-br: #c02652;
 }
 
+/* Tema oscuro */
+html.dark {
+  --bg: #0b1020;
+  --panel: #0f172a;
+  --border: #1e293b;
+  --text: #f8fafc;
+  --text-weak: #cbd5e1;
+  --muted: #94a3b8;
+
+  --focus-ring: rgba(124, 58, 237, .45);
+
+  --seat-free-bg: #1e293b;
+  --seat-free-br: #334155;
+  --seat-selected-bg: #7c3aed;
+  --seat-selected-br: #6d28d9;
+  --seat-occupied-bg: #ef476f;
+  --seat-occupied-br: #dc2654;
+}
+
+html.dark .input, html.dark select.input, html.dark textarea.input {
+  background: #1e293b;
+  border-color: #334155;
+  color: var(--text);
+}
+html.dark .input::placeholder { color: #64748b; }
+
+html.dark .btn.ghost {
+  color: #a78bfa;
+}
+html.dark .btn.ghost:hover {
+  background: rgba(124, 58, 237, .15);
+}
+
+html.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
+  background-size: 400% 100%;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; background: var(--bg); color: var(--text); }
-a { color: var(--accent-purple); }
+a { color: var(--accent-purple); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
 /* Panel card */
 .panel {
@@ -62,24 +101,85 @@ a { color: var(--accent-purple); }
 
 /* Botones */
 .btn {
-  display:inline-flex; align-items:center; gap:.5rem;
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
   background: var(--accent-purple); color: white; padding:.6rem .95rem;
   border:1px solid #5b21b6; border-radius:10px;
-  font-weight:700; cursor:pointer; text-decoration:none;
-  transition: filter .15s, transform .05s;
+  font-weight:700; cursor:pointer; text-decoration:none; line-height:1;
+  transition: filter .15s, transform .05s, box-shadow .15s, background .15s;
+  box-shadow: 0 6px 14px rgba(124,58,237,.18);
 }
 .btn:hover { filter: brightness(0.98); }
 .btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--focus-ring); }
+
 .btn.secondary {
   background: var(--accent-yellow); color:#111827; border-color:#eab308;
+  box-shadow: 0 6px 14px rgba(234,179,8,.18);
 }
 .btn.ghost {
   background: transparent; color: var(--accent-purple);
-  border: 1px solid var(--border);
+  border-color: transparent;
+}
+.btn.ghost:hover { background: rgba(124,58,237,.06); }
+.btn.gradient {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
+  border-color: transparent;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+.btn:disabled:hover {
+  filter: grayscale(0.3);
+  transform: none;
 }
 
-/* Leyenda de asientos mini */
-.legend .seat { width: 22px; height: 18px; border-radius: 6px; display:inline-block; border:2px solid transparent; }
-.color-free     { background: var(--seat-free-bg); border-color: var(--seat-free-br); }
-.color-selected { background: var(--seat-selected-bg); border-color: var(--seat-selected-br); }
-.color-occupied { background: var(--seat-occupied-bg); border-color: var(--seat-occupied-br); }
+/* Utilidades responsive mínimas (sm, md, lg) */
+@media (min-width: 640px) {
+  .panel { padding: 1.25rem; }
+}
+@media (min-width: 768px) {
+  .panel { padding: 1.5rem; }
+  .field-row { gap: 1rem; }
+}
+@media (min-width: 1024px) {
+  .panel { padding: 1.75rem; }
+}
+
+/* Grids comunes */
+.grid-autofit-220 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+@media (min-width: 640px) { .grid-autofit-220 { gap: 1.25rem; } }
+@media (min-width: 1024px) { .grid-autofit-220 { gap: 1.5rem; } }
+
+/* Estados de asiento (si aplica en componentes) */
+.seat {
+  display: grid; place-items: center; user-select: none;
+  border-radius: 10px; padding: .6rem; font-weight: 700;
+  border: 1px solid var(--seat-free-br); background: var(--seat-free-bg); color: #111827;
+  transition: transform .08s, box-shadow .15s, background .15s, color .15s;
+}
+.seat:hover { transform: translateY(-1px); }
+.seat--selected { background: var(--seat-selected-bg); border-color: var(--seat-selected-br); color: #fff; }
+.seat--occupied { background: var(--seat-occupied-bg); border-color: var(--seat-occupied-br); color: white; }
+
+/* Pequeñas animaciones */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up { animation: fadeInUp .25s ease-out both; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 10px;
+}
+
+/* Compatibilidad con Tailwind Preflight:
+   Si notas cambios en estilos base de inputs/tablas, ajusta aquí reglas específicas. */

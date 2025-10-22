@@ -1,7 +1,7 @@
 .zones {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem 2.4rem;
+  gap: 1.25rem 1.5rem; /* menos separación entre zonas */
   align-items: start;
 }
 
@@ -16,14 +16,14 @@
   --cols: 2;             /* se actualiza por inline style */
   --seat: 66px;          /* ancho/alto del asiento */
   --label: 28px;         /* ancho de columna para etiqueta de fila */
-  --row-gap: 12px;       /* gap entre filas */
-  --group-gap: 18px;     /* gap extra entre subgrupos (separador) */
+  --row-gap: 10px;       /* un poco menos gap entre filas */
+  --group-gap: 16px;     /* menos separación entre subgrupos */
 
   display: grid;
   grid-template-columns: var(--label) repeat(var(--cols), var(--seat));
   grid-auto-rows: auto;
   row-gap: var(--row-gap);
-  column-gap: 12px;
+  column-gap: 10px; /* menos gap entre asientos */
 }
 
 .corner { width: var(--label); height: 20px; }
@@ -35,6 +35,25 @@
   display:flex; align-items:center; justify-content:center;
   width: var(--label); height: var(--seat);
   color: #4b5563; font-weight: 700;
+}
+
+/* Modo oscuro: ajustar paleta dentro del alcance del componente */
+:host-context(.dark) {
+  /* variables usadas por este SCSS */
+  --text: #e5e7eb;
+  --seat-free-br: #334155; /* slate-700 */
+  --seat-free-bg: #0f172a; /* slate-900 */
+  --seat-selected-br: #a78bfa; /* violet-300 */
+  --seat-selected-bg: #7c3aed; /* violet-600 */
+  --seat-occupied-br: #fb7185; /* rose-400 */
+  --seat-occupied-bg: #ef476f; /* mantiene identidad */
+
+  .col-label, .row-label { color: #9ca3af; }
+  .seat { color: var(--text); }
+  .seat-code { color: #e5e7eb; }
+  .seat-headrest { background: #111827; box-shadow: inset 0 1px 1px rgba(0,0,0,.25); }
+  .seat-cushion { background: #0b1220; box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
+  .seat-arms .arm { background: #374151; }
 }
 
 /* Separador de subgrupos: ocupa todas las columnas y crea un espacio extra */
@@ -59,6 +78,15 @@
 }
 .seat:hover { box-shadow: 0 6px 14px rgba(0,0,0,.12); }
 .seat:active { transform: translateY(1px); }
+.seat:focus-visible { box-shadow: 0 0 0 3px rgba(99, 102, 241, .45); }
+
+/* Fantasma para alinear filas (sin mostrar nada) */
+.seat.ghost {
+  opacity: 0;
+  box-shadow: none;
+  border-color: transparent;
+  pointer-events: none;
+}
 
 .seat-headrest {
   position:absolute; top:6px; width: 40px; height: 16px;
@@ -95,6 +123,18 @@
   background: var(--seat-occupied-bg, #ef476f);
   border-color: var(--seat-occupied-br, #c02652);
   color: #fff; cursor:not-allowed;
+}
+/* Restringido por clase (mostrar atenuado y borde punteado) */
+.seat.restricted {
+  filter: grayscale(0.6);
+  opacity: .6;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* Estado deshabilitado nativo: mantener estilo consistente */
+.seat[disabled] {
+  pointer-events: none;
 }
 .seat.occupied .seat-headrest,
 .seat.occupied .seat-cushion,

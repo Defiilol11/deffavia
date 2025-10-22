@@ -14,6 +14,8 @@ export class EmailService {
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <style>
       :root {
         --bg: #ffffff;
@@ -28,6 +30,19 @@ export class EmailService {
         --accent-purple: #7c3aed;
 
         --focus-ring: rgba(124, 58, 237, .35);
+        --table-head: #f9fafb;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1020;
+          --panel: #0f172a;
+          --border: #1f2937;
+          --text: #f8fafc;
+          --text-weak: #cbd5e1;
+          --muted: #94a3b8;
+          --table-head: #0b1328;
+        }
       }
 
       body {
@@ -86,7 +101,7 @@ export class EmailService {
       }
 
       th {
-        background: #f9fafb;
+        background: var(--table-head);
         font-weight:600;
         color: var(--text-weak);
       }

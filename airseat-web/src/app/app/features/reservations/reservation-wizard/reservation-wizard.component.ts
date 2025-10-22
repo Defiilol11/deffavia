@@ -29,35 +29,37 @@ type PersistedRow = {
   selector: 'app-reservation-wizard',
   imports: [CommonModule, ReactiveFormsModule, SeatMapComponent],
   template: `
-    <section class="panel" style="display:grid;gap:1rem">
-      <h2 style="margin:0">Reservar asientos</h2>
-      <div class="help">
-        Debes estar autenticado para crear reservas. Estás logueado como
-        <strong>{{ userEmail }}</strong
-        >.
+    <section class="panel grid gap-4">
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <h2 class="m-0 text-2xl font-bold tracking-tight">Reservar asientos</h2>
+        <div class="text-sm text-zinc-600 dark:text-zinc-300">
+          Debes estar autenticado para crear reservas. Estás logueado como
+          <strong>{{ userEmail }}</strong
+          >.
+        </div>
       </div>
 
       <!-- Paso 1 -->
       <form [formGroup]="cfgForm" (ngSubmit)="continueCfg()" class="panel">
-        <div class="field-row">
-          <div class="field">
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div>
             <label class="label">Cantidad</label>
-            <input
-              class="input"
-              type="number"
-              min="1"
-              formControlName="count"
-              [class.invalid]="cfgForm.controls.count.invalid && cfgForm.controls.count.touched"
-            />
+            <input class="input" type="number" min="1" formControlName="count" />
+            <div
+              class="help text-red-600 dark:text-red-400"
+              *ngIf="cfgForm.controls.count.invalid && cfgForm.controls.count.touched"
+            >
+              Ingrese una cantidad válida (mínimo 1).
+            </div>
           </div>
-          <div class="field">
+          <div>
             <label class="label">Clase</label>
             <select class="input" formControlName="seatClass">
               <option value="business">Negocios</option>
               <option value="economy">Económica</option>
             </select>
           </div>
-          <div class="field">
+          <div>
             <label class="label">Modo</label>
             <select class="input" formControlName="mode">
               <option value="manual">Selección manual</option>
@@ -66,17 +68,22 @@ type PersistedRow = {
           </div>
         </div>
 
-        <div
-          *ngIf="availabilityChecked()"
-          class="help"
-          [style.color]="canProceed() ? '#15803d' : '#b91c1c'"
-        >
-          Disponibles en {{ cfgForm.value.seatClass }}: <strong>{{ availableCount() }}</strong> ·
-          Requeridos: <strong>{{ cfgForm.value.count }}</strong>
+        <div *ngIf="availabilityChecked()" class="mt-2 text-sm">
+          <div
+            class="inline-flex rounded-md px-2 py-1 font-medium"
+            [ngClass]="{
+              'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300':
+                canProceed(),
+              'bg-rose-100 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300': !canProceed()
+            }"
+          >
+            Disponibles en {{ cfgForm.value.seatClass }}: {{ availableCount() }} · Requeridos:
+            {{ cfgForm.value.count }}
+          </div>
         </div>
-        <div *ngIf="availError" class="help" style="color:#b91c1c">{{ availError }}</div>
+        <div *ngIf="availError" class="help text-red-600 dark:text-red-400">{{ availError }}</div>
 
-        <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+        <div class="mt-3 flex flex-wrap gap-2">
           <button class="btn" type="submit" [disabled]="cfgForm.invalid || !canProceed()">
             Continuar
           </button>
@@ -87,24 +94,21 @@ type PersistedRow = {
       </form>
 
       <!-- Paso 2: selección manual -->
-      <div
-        *ngIf="step() === 2 && cfgForm.value.mode === 'manual'"
-        class="panel"
-        style="display:grid;gap:1rem"
-      >
+      <div *ngIf="step() === 2 && cfgForm.value.mode === 'manual'" class="panel grid gap-3">
         <div class="badge">
           Selecciona {{ requiredCount() }} asiento(s) libres. Disponibles: {{ availableCount() }}
         </div>
-        <app-seat-map
-          [pickMode]="true"
-          [maxSelection]="cfgForm.value.count || 1"
-          [seatClass]="cfgForm.value.seatClass || 'economy'"
-          [extraOccupiedCodes]="localOccupied"
-          [(selectedCodes)]="selectedCodes"
-        >
-        </app-seat-map>
+        <div class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <app-seat-map
+            [pickMode]="true"
+            [maxSelection]="cfgForm.value.count || 1"
+            [seatClass]="cfgForm.value.seatClass || 'economy'"
+            [extraOccupiedCodes]="localOccupied"
+            [(selectedCodes)]="selectedCodes"
+          ></app-seat-map>
+        </div>
 
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <div class="flex flex-wrap gap-2">
           <button
             class="btn"
             type="button"
@@ -119,9 +123,9 @@ type PersistedRow = {
 
       <!-- Paso 3: datos por asiento -->
       <div *ngIf="step() === 3" class="panel">
-        <form [formGroup]="passengerForm" (ngSubmit)="confirmOne()">
-          <div class="field-row">
-            <div class="field">
+        <form [formGroup]="passengerForm" (ngSubmit)="confirmOne()" class="grid gap-3">
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div>
               <label class="label">
                 {{
                   cfgForm.value.mode === 'manual'
@@ -129,26 +133,20 @@ type PersistedRow = {
                     : 'Pasajero ' + (randomIndex() + 1) + '/' + (cfgForm.value.count || 1)
                 }}
               </label>
-              <input
-                class="input"
-                formControlName="name"
-                placeholder="Nombre Apellido"
-                [class.invalid]="
-                  passengerForm.controls.name.invalid && passengerForm.controls.name.touched
-                "
-              />
+              <input class="input" formControlName="name" placeholder="Nombre Apellido" />
+              <div
+                class="help text-red-600 dark:text-red-400"
+                *ngIf="passengerForm.controls.name.invalid && passengerForm.controls.name.touched"
+              >
+                Ingresa un nombre válido (mínimo 3 caracteres).
+              </div>
             </div>
-            <div class="field">
+            <div>
               <label class="label">CUI</label>
-              <input
-                class="input"
-                formControlName="cui"
-                placeholder="13 dígitos"
-                [class.invalid]="!!cuiError && passengerForm.controls.cui.touched"
-              />
-              <div class="help" *ngIf="cuiError" style="color:#b91c1c">{{ cuiError }}</div>
+              <input class="input" formControlName="cui" placeholder="13 dígitos" />
+              <div class="help text-red-600 dark:text-red-400" *ngIf="cuiError">{{ cuiError }}</div>
             </div>
-            <div class="field">
+            <div>
               <label class="label">¿Llevará maleta?</label>
               <select class="input" formControlName="hasLuggage">
                 <option [ngValue]="true">Sí</option>
@@ -157,71 +155,70 @@ type PersistedRow = {
             </div>
           </div>
 
-          <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <div class="flex flex-wrap gap-2">
             <button class="btn" type="submit" [disabled]="passengerForm.invalid">Confirmar</button>
             <button class="btn ghost" type="button" (click)="skipCurrent()">Saltar</button>
           </div>
         </form>
-        <p class="help" style="margin-top:.5rem" *ngIf="lastMessage">{{ lastMessage }}</p>
+        <p class="help mt-2" *ngIf="lastMessage">{{ lastMessage }}</p>
       </div>
 
       <!-- Paso 4: resumen -->
       <div *ngIf="step() === 4" class="panel">
-        <h3 style="margin-top:0">Resumen de la reserva #{{ orderId }}</h3>
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr>
-              <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                Asiento
-              </th>
-              <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                Pasajero
-              </th>
-              <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">CUI</th>
-              <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">
-                Total (Q)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let r of reservedPersisted">
-              <td style="padding:6px;border-bottom:1px solid var(--border)">{{ r.seatCode }}</td>
-              <td style="padding:6px;border-bottom:1px solid var(--border)">
-                {{ r.passengerName }}
-              </td>
-              <td style="padding:6px;border-bottom:1px solid var(--border)">{{ r.cui }}</td>
-              <td style="padding:6px;border-bottom:1px solid var(--border);text-align:right">
-                {{ r.total | number : '1.2-2' }}
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3" style="padding:8px 6px;text-align:right;font-weight:800">Total</td>
-              <td style="padding:8px 6px;text-align:right;font-weight:800">
-                Q {{ grandTotal | number : '1.2-2' }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+        <h3 class="mt-0 text-lg font-bold">Resumen de la reserva #{{ orderId }}</h3>
+        <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <table class="min-w-full border-separate border-spacing-0">
+            <thead class="bg-zinc-50 text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
+              <tr>
+                <th class="px-3 py-2 text-left text-xs font-semibold">Asiento</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold">Pasajero</th>
+                <th class="px-3 py-2 text-left text-xs font-semibold">CUI</th>
+                <th class="px-3 py-2 text-right text-xs font-semibold">Total (Q)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let r of reservedPersisted"
+                class="border-t border-zinc-200 dark:border-zinc-800"
+              >
+                <td class="px-3 py-2">{{ r.seatCode }}</td>
+                <td class="px-3 py-2">{{ r.passengerName }}</td>
+                <td class="px-3 py-2">{{ r.cui }}</td>
+                <td class="px-3 py-2 text-right">{{ r.total | number : '1.2-2' }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="border-t border-zinc-200 dark:border-zinc-800">
+                <td colspan="3" class="px-3 py-2 text-right font-bold">Total</td>
+                <td class="px-3 py-2 text-right font-bold">
+                  Q {{ grandTotal | number : '1.2-2' }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
 
-        <div class="help" style="margin-top:.5rem">
+        <div class="help mt-3">
           El correo de confirmación fue enviado automáticamente por el servidor al crear la reserva.
           Puedes reenviarlo como prueba:
         </div>
-        <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
+        <div class="mt-2 flex flex-wrap items-center gap-2">
           <button class="btn ghost" (click)="showEmailPreview()">Ver correo (preview)</button>
-          <button class="btn" (click)="sendEmail()" [disabled]="sending">Reenviar correo</button>
-          <span class="help" *ngIf="sending">Enviando…</span>
-          <span class="help" style="color:#15803d" *ngIf="sendOk">{{ sendOk }}</span>
-          <span class="help" style="color:#b91c1c" *ngIf="sendErr">{{ sendErr }}</span>
+          <button class="btn" (click)="sendEmail()" [disabled]="sending">
+            <span *ngIf="!sending">Reenviar correo</span>
+            <span *ngIf="sending">Enviando…</span>
+          </button>
+          <span class="help text-emerald-600 dark:text-emerald-400" *ngIf="sendOk">{{
+            sendOk
+          }}</span>
+          <span class="help text-red-600 dark:text-red-400" *ngIf="sendErr">{{ sendErr }}</span>
         </div>
 
-        <div *ngIf="emailHtml" class="panel" style="margin-top:1rem">
-          <h4>Vista previa del correo para {{ userEmail }}</h4>
+        <div *ngIf="emailHtml" class="panel mt-4">
+          <h4 class="text-base font-semibold">Vista previa del correo para {{ userEmail }}</h4>
           <iframe
             [srcdoc]="emailHtml"
-            style="width:100%;height:360px;border:1px solid var(--border);border-radius:8px;background:#fff"
+            class="h-[360px] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-800"
           ></iframe>
         </div>
       </div>

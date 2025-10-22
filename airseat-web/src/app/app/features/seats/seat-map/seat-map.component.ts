@@ -54,6 +54,8 @@ export class SeatMapComponent implements OnInit, OnChanges {
 
   economyRows = ['I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
   economyCols = [3, 4, 5, 6, 7];
+  // Usaremos la lista completa (economy) para alinear filas entre zonas
+  allRows = this.economyRows;
 
   // Separadores entre subgrupos de filas
   private businessBreaks = new Set(['G', 'D']); // (I,G) | (F,D) | (C,A)
@@ -104,14 +106,24 @@ export class SeatMapComponent implements OnInit, OnChanges {
       this.pickMode &&
       this.isRightClass(s) &&
       !s.occupied &&
-      !this.isSelected(s) &&
-      this.selectedCodes.length < this.maxSelection
+      // permitir seleccionar si aún hay cupo
+      ((!this.isSelected(s) && this.selectedCodes.length < this.maxSelection) ||
+        // permitir deseleccionar con un click si ya está seleccionado
+        this.isSelected(s))
     );
   }
 
   onClick(row: string, col: number) {
     const s = this.getSeat(row, col);
-    if (!s || !this.canPick(s)) return;
+    if (!s || !this.pickMode) return;
+    // Toggle: si está seleccionado, quitarlo; si no, agregar si hay cupo
+    if (this.isSelected(s)) {
+      const next = this.selectedCodes.filter((c) => c !== s.code);
+      this.selectedCodes = next;
+      this.selectedCodesChange.emit(next);
+      return;
+    }
+    if (!this.canPick(s)) return;
     const next = [...this.selectedCodes, s.code];
     this.selectedCodes = next;
     this.selectedCodesChange.emit(next);
@@ -125,12 +137,23 @@ export class SeatMapComponent implements OnInit, OnChanges {
     this.selectedCodesChange.emit(next);
   }
 
+  onKeyDown(ev: KeyboardEvent, row: string, col: number) {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      this.onClick(row, col);
+    }
+  }
+
   // Separador después de ciertas filas (para espaciado de bloques)
   sepAfterBusinessRow(r: string) {
     return this.businessBreaks.has(r);
   }
   sepAfterEconomyRow(r: string) {
     return this.economyBreaks.has(r);
+  }
+
+  hasBusinessRow(r: string) {
+    return this.businessRows.includes(r);
   }
 
   // trackBy helpers

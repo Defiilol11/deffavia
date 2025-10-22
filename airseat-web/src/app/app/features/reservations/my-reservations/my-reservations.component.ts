@@ -8,93 +8,105 @@ import { SeatPickerModalComponent } from '../components/seat-picker-modal.compon
   selector: 'app-my-reservations',
   imports: [CommonModule, SeatPickerModalComponent],
   template: `
-    <section class="panel" style="display:grid;gap:1rem">
-      <h2 style="margin:0">Mis reservas</h2>
+    <section class="panel grid gap-4">
+      <div class="flex items-end justify-between gap-3 flex-wrap">
+        <h2 class="m-0 text-2xl font-bold tracking-tight">Mis reservas</h2>
+        <button class="btn ghost" type="button" (click)="refresh()">Actualizar</button>
+      </div>
 
-      <div *ngIf="loading">Cargando…</div>
-      <div *ngIf="err" class="help" style="color:#b91c1c">{{ err }}</div>
+      <!-- Estados -->
+      <div *ngIf="loading" class="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+        <div class="h-5 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+        <div class="mt-3 grid gap-2">
+          <div class="h-10 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+          <div class="h-10 w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+        </div>
+      </div>
+      <div *ngIf="!loading && err" class="text-sm font-medium text-red-600 dark:text-red-400">
+        {{ err }}
+      </div>
+      <div
+        *ngIf="!loading && !err && !orders.length"
+        class="panel text-sm text-zinc-600 dark:text-zinc-300"
+      >
+        Aún no tienes reservas. Crea una desde el asistente.
+      </div>
 
+      <!-- Listado de reservas -->
       <ng-container *ngFor="let o of orders; trackBy: trackOrder">
         <div class="panel">
-          <div
-            style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"
-          >
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <b>Reserva #{{ o.id }}</b>
-              <span
-                class="badge"
-                [style.background]="o.status === 'active' ? '#dcfce7' : '#fee2e2'"
-                >{{ o.status }}</span
-              >
+              <div class="flex items-center gap-2 text-sm">
+                <span class="font-semibold">Reserva #{{ o.id }}</span>
+                <span
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  [ngClass]="{
+                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300':
+                      o.status === 'active',
+                    'bg-rose-100 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300':
+                      o.status !== 'active'
+                  }"
+                >
+                  {{ o.status }}
+                </span>
+              </div>
               <div class="help">Creada: {{ o.reserved_at | date : 'short' }}</div>
             </div>
-            <div style="text-align:right">
+            <div class="text-right text-sm">
               <div>Subtotal: Q {{ o.price_subtotal | number : '1.2-2' }}</div>
               <div>Descuento: Q {{ o.discount_total | number : '1.2-2' }}</div>
               <div>Recargos: Q {{ o.modifiers_total | number : '1.2-2' }}</div>
-              <div>
-                <b>Total: Q {{ o.total | number : '1.2-2' }}</b>
-              </div>
+              <div class="text-base font-bold">Total: Q {{ o.total | number : '1.2-2' }}</div>
             </div>
           </div>
 
-          <table style="width:100%;border-collapse:collapse;margin-top:.5rem">
-            <thead>
-              <tr>
-                <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                  Asiento
-                </th>
-                <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                  Clase
-                </th>
-                <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                  Pasajero
-                </th>
-                <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">
-                  CUI
-                </th>
-                <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">
-                  Total (Q)
-                </th>
-                <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let i of itemsByOrder[o.id]; trackBy: trackItem">
-                <td style="padding:6px;border-bottom:1px solid var(--border)">{{ i.seat_code }}</td>
-                <td style="padding:6px;border-bottom:1px solid var(--border)">
-                  {{ i.seat_class }}
-                </td>
-                <td style="padding:6px;border-bottom:1px solid var(--border)">
-                  {{ i.passenger_name }}
-                </td>
-                <td style="padding:6px;border-bottom:1px solid var(--border)">{{ i.cui }}</td>
-                <td style="padding:6px;border-bottom:1px solid var(--border);text-align:right">
-                  {{ i.total | number : '1.2-2' }}
-                </td>
-                <td style="padding:6px;border-bottom:1px solid var(--border);text-align:right">
-                  <button
-                    class="btn ghost"
-                    [disabled]="o.status !== 'active' || i.status !== 'active'"
-                    (click)="openPicker(o, i)"
-                  >
-                    Modificar
-                  </button>
-                  <button
-                    class="btn secondary"
-                    [disabled]="o.status !== 'active' || i.status !== 'active'"
-                    (click)="cancelItem(o, i)"
-                  >
-                    Cancelar
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="mt-3 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <table class="min-w-full border-separate border-spacing-0">
+              <thead class="bg-zinc-50 text-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-300">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold">Asiento</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold">Clase</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold">Pasajero</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold">CUI</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold">Total (Q)</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-900 dark:text-zinc-100">
+                <tr
+                  *ngFor="let i of itemsByOrder[o.id]; trackBy: trackItem"
+                  class="border-t border-zinc-200 dark:border-zinc-800"
+                >
+                  <td class="px-3 py-2 align-middle font-medium">{{ i.seat_code }}</td>
+                  <td class="px-3 py-2 align-middle capitalize">{{ i.seat_class }}</td>
+                  <td class="px-3 py-2 align-middle">{{ i.passenger_name }}</td>
+                  <td class="px-3 py-2 align-middle">{{ i.cui }}</td>
+                  <td class="px-3 py-2 align-middle text-right">
+                    {{ i.total | number : '1.2-2' }}
+                  </td>
+                  <td class="px-3 py-2 align-middle text-right">
+                    <button
+                      class="btn ghost mr-1"
+                      [disabled]="o.status !== 'active' || i.status !== 'active'"
+                      (click)="openPicker(o, i)"
+                    >
+                      Modificar
+                    </button>
+                    <button
+                      class="btn secondary"
+                      [disabled]="o.status !== 'active' || i.status !== 'active'"
+                      (click)="cancelItem(o, i)"
+                    >
+                      Cancelar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div style="margin-top:.5rem;display:flex;gap:.5rem;justify-content:flex-end">
+          <div class="mt-3 flex items-center justify-end gap-2">
             <button class="btn" [disabled]="o.status !== 'active'" (click)="cancelOrder(o)">
               Cancelar reserva completa
             </button>
@@ -110,8 +122,7 @@ import { SeatPickerModalComponent } from '../components/seat-picker-modal.compon
       [seatClass]="pickerFor?.seat_class || 'economy'"
       (cancel)="closePicker()"
       (pick)="confirmPicker($event)"
-    >
-    </app-seat-picker-modal>
+    />
   `,
 })
 export class MyReservationsComponent {

@@ -42,6 +42,13 @@ export const routes: Routes = [
       ),
     title: 'Mis reservas',
   },
+  {
+    path: 'files',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./app/features/files/files-page.component').then((m) => m.FilesPageComponent),
+    title: 'Exportar / Importar reservas',
+  },
 
   { path: 'about', component: AboutComponent, title: 'Acerca de mí' },
   { path: '**', redirectTo: '' },

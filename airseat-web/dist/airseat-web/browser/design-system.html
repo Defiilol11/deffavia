@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deffavia - Sistema de Diseño y Paleta de Colores</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Variables CSS - Tema Claro */
+      :root {
+        --bg: #ffffff;
+        --panel: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --text-weak: #4b5563;
+        --muted: #6b7280;
+
+        --accent-yellow: #ffd166;
+        --accent-pink: #ef476f;
+        --accent-purple: #7c3aed;
+
+        --focus-ring: rgba(124, 58, 237, 0.35);
+
+        --seat-free-bg: #f3f4f6;
+        --seat-free-br: #d1d5db;
+        --seat-selected-bg: var(--accent-purple);
+        --seat-selected-br: #5b21b6;
+        --seat-occupied-bg: var(--accent-pink);
+        --seat-occupied-br: #c02652;
+      }
+
+      /* Variables CSS - Tema Oscuro */
+      html.dark {
+        --bg: #0b1020;
+        --panel: #0f172a;
+        --border: #1e293b;
+        --text: #f8fafc;
+        --text-weak: #cbd5e1;
+        --muted: #94a3b8;
+
+        --focus-ring: rgba(124, 58, 237, 0.45);
+
+        --seat-free-bg: #1e293b;
+        --seat-free-br: #334155;
+        --seat-selected-bg: #7c3aed;
+        --seat-selected-br: #6d28d9;
+        --seat-occupied-bg: #ef476f;
+        --seat-occupied-br: #dc2654;
+      }
+
+      /* Estilos Base */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        border-radius: 0 0 2rem 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+
+      .header p {
+        text-align: center;
+        font-size: 1.25rem;
+        opacity: 0.95;
+      }
+
+      /* Theme Toggle */
+      .theme-toggle {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 1000;
+        background: var(--panel);
+        border: 2px solid var(--border);
+        border-radius: 2rem;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .theme-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .theme-toggle-icon {
+        font-size: 1.5rem;
+      }
+
+      /* Section */
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        transition: background 0.3s ease, border-color 0.3s ease;
+      }
+
+      .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .section-subtitle {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: var(--text);
+      }
+
+      /* Color Grid */
+      .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .color-card {
+        background: var(--bg);
+        border: 2px solid var(--border);
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .color-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .color-swatch {
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .color-info {
+        padding: 1.25rem;
+      }
+
+      .color-name {
+        font-weight: 700;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+      }
+
+      .color-var {
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: var(--accent-purple);
+        margin-bottom: 0.25rem;
+        background: var(--seat-free-bg);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        display: inline-block;
+      }
+
+      .color-hex {
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-weak);
+        margin-top: 0.5rem;
+      }
+
+      .color-usage {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin-top: 0.5rem;
+        line-height: 1.5;
+      }
+
+      /* Component Examples */
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .example-card {
+        background: var(--bg);
+        border: 2px solid var(--border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+      }
+
+      .example-title {
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-bottom: 1rem;
+        color: var(--text);
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        font-size: 0.95rem;
+      }
+
+      .btn-primary {
+        background: var(--accent-purple);
+        color: white;
+        border-color: #5b21b6;
+        box-shadow: 0 6px 14px rgba(124, 58, 237, 0.18);
+      }
+
+      .btn-primary:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: var(--accent-yellow);
+        color: #111827;
+        border-color: #eab308;
+        box-shadow: 0 6px 14px rgba(234, 179, 8, 0.18);
+      }
+
+      .btn-secondary:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--accent-purple);
+        border-color: transparent;
+      }
+
+      html.dark .btn-ghost {
+        color: #a78bfa;
+      }
+
+      .btn-ghost:hover {
+        background: rgba(124, 58, 237, 0.1);
+      }
+
+      .btn-gradient {
+        background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
+        color: white;
+        border: none;
+      }
+
+      .btn-gradient:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+
+      /* Form Elements */
+      .input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: 0.75rem;
+        background: #fff;
+        color: var(--text);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+      }
+
+      html.dark .input {
+        background: #1e293b;
+        border-color: #334155;
+      }
+
+      .input:focus {
+        outline: none;
+        border-color: var(--accent-purple);
+        box-shadow: 0 0 0 4px var(--focus-ring);
+      }
+
+      .input::placeholder {
+        color: #9ca3af;
+      }
+
+      html.dark .input::placeholder {
+        color: #64748b;
+      }
+
+      /* Badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .badge-success {
+        background: #d1fae5;
+        color: #047857;
+      }
+
+      html.dark .badge-success {
+        background: rgba(52, 211, 153, 0.1);
+        color: #6ee7b7;
+      }
+
+      .badge-error {
+        background: #ffe4e6;
+        color: #be123c;
+      }
+
+      html.dark .badge-error {
+        background: rgba(251, 113, 133, 0.1);
+        color: #fda4af;
+      }
+
+      .badge-warning {
+        background: linear-gradient(90deg, #facc15, #eab308);
+        color: #713f12;
+      }
+
+      /* Seats Demo */
+      .seats-demo {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+
+      .seat {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid;
+      }
+
+      .seat-free {
+        background: var(--seat-free-bg);
+        border-color: var(--seat-free-br);
+        color: var(--text);
+      }
+
+      .seat-free:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .seat-selected {
+        background: var(--seat-selected-bg);
+        border-color: var(--seat-selected-br);
+        color: white;
+      }
+
+      .seat-occupied {
+        background: var(--seat-occupied-bg);
+        border-color: var(--seat-occupied-br);
+        color: white;
+        cursor: not-allowed;
+      }
+
+      /* Gradient Samples */
+      .gradient-samples {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .gradient-card {
+        height: 120px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.125rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .gradient-1 {
+        background: linear-gradient(180deg, #dc2626 0%, #db2777 50%, #9333ea 100%);
+      }
+
+      .gradient-2 {
+        background: linear-gradient(90deg, #dc2626 0%, #db2777 50%, #9333ea 100%);
+      }
+
+      .gradient-3 {
+        background: linear-gradient(90deg, #7c3aed, #ef476f);
+      }
+
+      .gradient-4 {
+        background: linear-gradient(135deg, #9333ea, #db2777);
+      }
+
+      /* Code Block */
+      .code-block {
+        background: var(--seat-free-bg);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        color: var(--text);
+        overflow-x: auto;
+      }
+
+      .code-block code {
+        color: var(--accent-purple);
+      }
+
+      /* Table */
+      .comparison-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .comparison-table th {
+        background: var(--seat-free-bg);
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .comparison-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .comparison-table td:first-child {
+        font-family: 'Courier New', monospace;
+        color: var(--accent-purple);
+        font-weight: 600;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        padding: 3rem 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .header p {
+          font-size: 1rem;
+        }
+
+        .section {
+          padding: 1.5rem;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+        }
+
+        .theme-toggle {
+          top: 1rem;
+          right: 1rem;
+          padding: 0.5rem 1rem;
+        }
+
+        .color-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .examples-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Scroll Animation */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .section {
+        animation: fadeInUp 0.6s ease-out backwards;
+      }
+
+      .section:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .section:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .section:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .section:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .section:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema">
+      <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+      <span id="themeText">Modo Oscuro</span>
+    </button>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="container">
+        <h1>✈️ Deffavia</h1>
+        <p>Sistema de Diseño y Paleta de Colores</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Introducción -->
+      <section class="section">
+        <h2 class="section-title">📋 Introducción</h2>
+        <p style="font-size: 1.125rem; color: var(--text-weak); margin-bottom: 1rem">
+          Sistema de diseño con soporte dual para temas claro y oscuro, utilizando una paleta de
+          colores basada en <strong style="color: var(--accent-yellow)">amarillo</strong>,
+          <strong style="color: var(--accent-pink)">rosado</strong> y
+          <strong style="color: var(--accent-purple)">morado</strong> como colores de acento
+          principales.
+        </p>
+        <p style="font-size: 1rem; color: var(--muted)">
+          Haz clic en el botón en la esquina superior derecha para cambiar entre tema claro y oscuro
+          y ver cómo se adapta toda la paleta de colores.
+        </p>
+      </section>
+
+      <!-- Colores Base - Tema Claro -->
+      <section class="section">
+        <h2 class="section-title">🌞 Colores Base - Tema Claro</h2>
+
+        <h3 class="section-subtitle">Fondos y Estructuras</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ffffff; color: #111827">#FFFFFF</div>
+            <div class="color-info">
+              <div class="color-name">Background</div>
+              <div class="color-var">--bg</div>
+              <div class="color-hex">#ffffff</div>
+              <div class="color-usage">Fondo principal de la aplicación</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ffffff; color: #111827">#FFFFFF</div>
+            <div class="color-info">
+              <div class="color-name">Panel</div>
+              <div class="color-var">--panel</div>
+              <div class="color-hex">#ffffff</div>
+              <div class="color-usage">Fondo de paneles y tarjetas</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #e5e7eb; color: #111827">#E5E7EB</div>
+            <div class="color-info">
+              <div class="color-name">Border</div>
+              <div class="color-var">--border</div>
+              <div class="color-hex">#e5e7eb</div>
+              <div class="color-usage">Bordes y separadores</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-subtitle">Texto</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #111827">#111827</div>
+            <div class="color-info">
+              <div class="color-name">Text Primary</div>
+              <div class="color-var">--text</div>
+              <div class="color-hex">#111827</div>
+              <div class="color-usage">Texto principal, encabezados</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #4b5563">#4B5563</div>
+            <div class="color-info">
+              <div class="color-name">Text Secondary</div>
+              <div class="color-var">--text-weak</div>
+              <div class="color-hex">#4b5563</div>
+              <div class="color-usage">Texto secundario, labels</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #6b7280">#6B7280</div>
+            <div class="color-info">
+              <div class="color-name">Text Muted</div>
+              <div class="color-var">--muted</div>
+              <div class="color-hex">#6b7280</div>
+              <div class="color-usage">Texto terciario, ayuda</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Colores Base - Tema Oscuro -->
+      <section class="section">
+        <h2 class="section-title">🌙 Colores Base - Tema Oscuro</h2>
+
+        <h3 class="section-subtitle">Fondos y Estructuras</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #0b1020">#0B1020</div>
+            <div class="color-info">
+              <div class="color-name">Background</div>
+              <div class="color-var">--bg (dark)</div>
+              <div class="color-hex">#0b1020</div>
+              <div class="color-usage">Fondo principal en modo oscuro</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #0f172a">#0F172A</div>
+            <div class="color-info">
+              <div class="color-name">Panel</div>
+              <div class="color-var">--panel (dark)</div>
+              <div class="color-hex">#0f172a</div>
+              <div class="color-usage">Fondo de paneles en modo oscuro</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #1e293b">#1E293B</div>
+            <div class="color-info">
+              <div class="color-name">Border</div>
+              <div class="color-var">--border (dark)</div>
+              <div class="color-hex">#1e293b</div>
+              <div class="color-usage">Bordes en modo oscuro</div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-subtitle">Texto</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #f8fafc; color: #111827">#F8FAFC</div>
+            <div class="color-info">
+              <div class="color-name">Text Primary</div>
+              <div class="color-var">--text (dark)</div>
+              <div class="color-hex">#f8fafc</div>
+              <div class="color-usage">Texto principal en modo oscuro</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #cbd5e1; color: #111827">#CBD5E1</div>
+            <div class="color-info">
+              <div class="color-name">Text Secondary</div>
+              <div class="color-var">--text-weak (dark)</div>
+              <div class="color-hex">#cbd5e1</div>
+              <div class="color-usage">Texto secundario en modo oscuro</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #94a3b8; color: #111827">#94A3B8</div>
+            <div class="color-info">
+              <div class="color-name">Text Muted</div>
+              <div class="color-var">--muted (dark)</div>
+              <div class="color-hex">#94a3b8</div>
+              <div class="color-usage">Texto terciario en modo oscuro</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Colores de Acento -->
+      <section class="section">
+        <h2 class="section-title">🎨 Colores de Acento (Brand)</h2>
+        <p style="color: var(--muted); margin-bottom: 1.5rem">
+          Estos colores se mantienen consistentes en ambos temas y definen la identidad visual de la
+          marca.
+        </p>
+
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ffd166; color: #111827">#FFD166</div>
+            <div class="color-info">
+              <div class="color-name">Amarillo (Yellow)</div>
+              <div class="color-var">--accent-yellow</div>
+              <div class="color-hex">#ffd166</div>
+              <div class="color-usage">Botones secundarios, CTAs, badges premium</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ef476f">#EF476F</div>
+            <div class="color-info">
+              <div class="color-name">Rosado (Pink)</div>
+              <div class="color-var">--accent-pink</div>
+              <div class="color-hex">#ef476f</div>
+              <div class="color-usage">Gradientes, estados ocupados, alertas</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #7c3aed">#7C3AED</div>
+            <div class="color-info">
+              <div class="color-name">Morado (Purple)</div>
+              <div class="color-var">--accent-purple</div>
+              <div class="color-hex">#7c3aed</div>
+              <div class="color-usage">Botones primarios, enlaces, selecciones</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Estados de Asientos -->
+      <section class="section">
+        <h2 class="section-title">💺 Estados de Asientos</h2>
+        <p style="color: var(--muted); margin-bottom: 1.5rem">
+          Colores que indican el estado de disponibilidad de los asientos en el sistema.
+        </p>
+
+        <h3 class="section-subtitle">Vista Previa Interactiva</h3>
+        <div class="seats-demo">
+          <div class="seat seat-free">A1</div>
+          <div class="seat seat-free">A2</div>
+          <div class="seat seat-selected">B1</div>
+          <div class="seat seat-selected">B2</div>
+          <div class="seat seat-occupied">C1</div>
+          <div class="seat seat-occupied">C2</div>
+        </div>
+
+        <h3 class="section-subtitle">Colores por Estado</h3>
+        <div class="color-grid">
+          <div class="color-card">
+            <div class="color-swatch" style="background: #f3f4f6; color: #111827">Libre</div>
+            <div class="color-info">
+              <div class="color-name">Asiento Disponible</div>
+              <div class="color-var">--seat-free-bg</div>
+              <div class="color-hex">#f3f4f6 (light) / #1e293b (dark)</div>
+              <div class="color-usage">Asientos que pueden ser seleccionados</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #7c3aed">Seleccionado</div>
+            <div class="color-info">
+              <div class="color-name">Asiento Seleccionado</div>
+              <div class="color-var">--seat-selected-bg</div>
+              <div class="color-hex">#7c3aed</div>
+              <div class="color-usage">Asiento actualmente seleccionado por el usuario</div>
+            </div>
+          </div>
+
+          <div class="color-card">
+            <div class="color-swatch" style="background: #ef476f">Ocupado</div>
+            <div class="color-info">
+              <div class="color-name">Asiento Ocupado</div>
+              <div class="color-var">--seat-occupied-bg</div>
+              <div class="color-hex">#ef476f</div>
+              <div class="color-usage">Asiento ya reservado, no disponible</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gradientes -->
+      <section class="section">
+        <h2 class="section-title">🌈 Gradientes</h2>
+        <p style="color: var(--muted); margin-bottom: 1.5rem">
+          Gradientes utilizados en headers, botones especiales y elementos decorativos.
+        </p>
+
+        <div class="gradient-samples">
+          <div class="gradient-card gradient-1">Vertical: Rojo → Rosa → Morado</div>
+          <div class="gradient-card gradient-2">Horizontal: Rojo → Rosa → Morado</div>
+          <div class="gradient-card gradient-3">Morado → Rosa (Header)</div>
+          <div class="gradient-card gradient-4">Diagonal: Morado → Rosa</div>
+        </div>
+
+        <div class="code-block">
+          <pre><code>/* Vertical */
+linear-gradient(180deg, #dc2626 0%, #db2777 50%, #9333ea 100%)
+
+/* Horizontal */
+linear-gradient(90deg, #dc2626 0%, #db2777 50%, #9333ea 100%)
+
+/* Header Email */
+linear-gradient(90deg, #7c3aed, #ef476f)
+
+/* Diagonal */
+linear-gradient(135deg, #9333ea, #db2777)</code></pre>
+        </div>
+      </section>
+
+      <!-- Componentes -->
+      <section class="section">
+        <h2 class="section-title">🧩 Componentes</h2>
+        <p style="color: var(--muted); margin-bottom: 1.5rem">
+          Ejemplos de componentes usando la paleta de colores del sistema.
+        </p>
+
+        <div class="examples-grid">
+          <!-- Botones -->
+          <div class="example-card">
+            <div class="example-title">Botones</div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem">
+              <button class="btn btn-primary">Botón Primario</button>
+              <button class="btn btn-secondary">Botón Secundario</button>
+              <button class="btn btn-ghost">Botón Ghost</button>
+              <button class="btn btn-gradient">Botón Gradiente</button>
+            </div>
+          </div>
+
+          <!-- Formularios -->
+          <div class="example-card">
+            <div class="example-title">Campos de Formulario</div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem">
+              <input type="text" class="input" placeholder="Nombre completo" />
+              <input type="email" class="input" placeholder="correo@ejemplo.com" />
+              <input type="password" class="input" placeholder="Contraseña" />
+            </div>
+          </div>
+
+          <!-- Badges -->
+          <div class="example-card">
+            <div class="example-title">Badges de Estado</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem">
+              <span class="badge badge-success">✓ Activo</span>
+              <span class="badge badge-error">✕ Cancelado</span>
+              <span class="badge badge-warning">⚡ Premium</span>
+            </div>
+          </div>
+
+          <!-- Panel -->
+          <div class="example-card">
+            <div class="example-title">Panel Informativo</div>
+            <div
+              style="
+                background: var(--seat-free-bg);
+                padding: 1rem;
+                border-radius: 0.75rem;
+                border: 1px solid var(--border);
+              "
+            >
+              <p style="color: var(--text); font-weight: 600; margin-bottom: 0.5rem">
+                ℹ️ Información Importante
+              </p>
+              <p style="color: var(--muted); font-size: 0.875rem; margin: 0">
+                Este es un panel de ejemplo que se adapta automáticamente al tema seleccionado.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabla de Comparación -->
+      <section class="section">
+        <h2 class="section-title">📊 Comparación de Variables</h2>
+        <p style="color: var(--muted); margin-bottom: 1rem">
+          Comparación directa de las variables CSS entre tema claro y oscuro.
+        </p>
+
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Variable CSS</th>
+              <th>Tema Claro</th>
+              <th>Tema Oscuro</th>
+              <th>Uso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>--bg</td>
+              <td>#ffffff</td>
+              <td>#0b1020</td>
+              <td>Fondo principal</td>
+            </tr>
+            <tr>
+              <td>--panel</td>
+              <td>#ffffff</td>
+              <td>#0f172a</td>
+              <td>Paneles y tarjetas</td>
+            </tr>
+            <tr>
+              <td>--border</td>
+              <td>#e5e7eb</td>
+              <td>#1e293b</td>
+              <td>Bordes y separadores</td>
+            </tr>
+            <tr>
+              <td>--text</td>
+              <td>#111827</td>
+              <td>#f8fafc</td>
+              <td>Texto principal</td>
+            </tr>
+            <tr>
+              <td>--text-weak</td>
+              <td>#4b5563</td>
+              <td>#cbd5e1</td>
+              <td>Texto secundario</td>
+            </tr>
+            <tr>
+              <td>--muted</td>
+              <td>#6b7280</td>
+              <td>#94a3b8</td>
+              <td>Texto terciario</td>
+            </tr>
+            <tr>
+              <td>--accent-yellow</td>
+              <td colspan="2" style="text-align: center">#ffd166</td>
+              <td>Amarillo brand</td>
+            </tr>
+            <tr>
+              <td>--accent-pink</td>
+              <td colspan="2" style="text-align: center">#ef476f</td>
+              <td>Rosado brand</td>
+            </tr>
+            <tr>
+              <td>--accent-purple</td>
+              <td colspan="2" style="text-align: center">#7c3aed</td>
+              <td>Morado brand</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Implementación -->
+      <section class="section">
+        <h2 class="section-title">💻 Implementación</h2>
+        <p style="color: var(--muted); margin-bottom: 1rem">
+          Cómo usar estas variables en tu código CSS/SCSS.
+        </p>
+
+        <div class="code-block">
+          <pre><code>/* Ejemplo de uso en CSS */
+.mi-componente {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.boton-principal {
+  background: var(--accent-purple);
+  color: white;
+}
+
+.texto-secundario {
+  color: var(--text-weak);
+}
+
+/* Para cambiar a modo oscuro, solo agrega la clase 'dark' al html */
+&lt;html class="dark"&gt;
+  &lt;!-- Todo se adapta automáticamente --&gt;
+&lt;/html&gt;</code></pre>
+        </div>
+      </section>
+
+      <!-- Archivos -->
+      <section class="section">
+        <h2 class="section-title">📁 Archivos de Configuración</h2>
+        <p style="color: var(--muted); margin-bottom: 1rem">
+          Ubicación de las definiciones de variables en el proyecto.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem">
+          <div
+            style="
+              background: var(--seat-free-bg);
+              padding: 1rem;
+              border-radius: 0.75rem;
+              border-left: 4px solid var(--accent-purple);
+            "
+          >
+            <div style="font-family: monospace; font-weight: 600; margin-bottom: 0.5rem">
+              📄 src/index.html
+            </div>
+            <div style="color: var(--muted); font-size: 0.875rem">
+              Variables CSS globales en la etiqueta &lt;style&gt; (líneas 166-212)
+            </div>
+          </div>
+
+          <div
+            style="
+              background: var(--seat-free-bg);
+              padding: 1rem;
+              border-radius: 0.75rem;
+              border-left: 4px solid var(--accent-pink);
+            "
+          >
+            <div style="font-family: monospace; font-weight: 600; margin-bottom: 0.5rem">
+              📄 src/styles.scss
+            </div>
+            <div style="color: var(--muted); font-size: 0.875rem">
+              Variables SCSS y estilos base del sistema (líneas 2-61)
+            </div>
+          </div>
+
+          <div
+            style="
+              background: var(--seat-free-bg);
+              padding: 1rem;
+              border-radius: 0.75rem;
+              border-left: 4px solid var(--accent-yellow);
+            "
+          >
+            <div style="font-family: monospace; font-weight: 600; margin-bottom: 0.5rem">
+              📄 src/app/core/email.service.ts
+            </div>
+            <div style="color: var(--muted); font-size: 0.875rem">
+              Variables CSS para emails con soporte dark mode (líneas 20-45)
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        🎨 <strong>Deffavia Design System</strong> - Sistema de reserva de asientos con paleta
+        amarillo, rosado y morado
+      </p>
+      <p style="margin-top: 0.5rem">Creado por Carlos Taracena • 2025</p>
+    </div>
+
+    <!-- JavaScript para el toggle de tema -->
+    <script>
+      // Función para cambiar el tema
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.toggle('dark');
+
+        // Guardar preferencia en localStorage
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+        // Actualizar el botón
+        updateThemeButton(isDark);
+      }
+
+      // Actualizar el icono y texto del botón
+      function updateThemeButton(isDark) {
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+
+        if (isDark) {
+          icon.textContent = '☀️';
+          text.textContent = 'Modo Claro';
+        } else {
+          icon.textContent = '🌙';
+          text.textContent = 'Modo Oscuro';
+        }
+      }
+
+      // Inicializar el tema al cargar la página
+      (function initTheme() {
+        const storedTheme = localStorage.getItem('theme');
+        const prefersDark =
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const isDark = storedTheme === 'dark' || (!storedTheme && prefersDark);
+
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        }
+
+        updateThemeButton(isDark);
+      })();
+
+      // Animación suave al hacer scroll
+      document.addEventListener('DOMContentLoaded', function () {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+              }
+            });
+          },
+          {
+            threshold: 0.1,
+          }
+        );
+
+        document.querySelectorAll('.section').forEach((section) => {
+          observer.observe(section);
+        });
+      });
+    </script>
+  </body>
+</html>

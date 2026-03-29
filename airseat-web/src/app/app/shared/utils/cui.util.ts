@@ -35,3 +35,17 @@ export function validateCui(cui: unknown) {
     return { valid: false, reason: 'Municipio inválido para el departamento.' };
   return { valid: true };
 }
+
+// Enmascara un CUI dejando visibles los últimos 4 dígitos.
+// Ej: 1234567890101 -> ***-***-***-0101 o *********-0101 (según formato simple).
+export function maskCui(cui: unknown, pretty: boolean = true): string {
+  const clean = String(cui ?? '').replace(/\D/g, '');
+  if (!clean) return '';
+  const last4 = clean.slice(-4);
+  if (pretty) {
+    // Formato en bloques de 3-3-3-4 con guiones
+    return `***-***-***-${last4}`;
+  }
+  // Formato continuo con asteriscos y últimos 4
+  return `${'*'.repeat(Math.max(0, clean.length - 4))}${last4}`;
+}

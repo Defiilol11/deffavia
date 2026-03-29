@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SeatClass, SeatMapComponent } from '../../seats/seat-map/seat-map.component';
-import { validateCui } from '../../../shared/utils/cui.util';
+import { validateCui, maskCui } from '../../../shared/utils/cui.util';
 import { UserStore } from '../../auth/user-store.service';
 import { ReservationsApi, CreateOrderPayloadGroup } from '../../../core/reservations-api.service';
 import { NotificationService } from '../../../core/notification.service';
@@ -320,7 +320,8 @@ export class GroupReservationComponent {
     }
 
     const passengersData = cuis.map((cui, i) => ({
-      passengerName: '',
+      // Usamos el CUI enmascarado como nombre del pasajero para que aparezca en el asiento
+      passengerName: maskCui(cui),
       cui,
       hasLuggage: false,
       isLeader: i === 0,
